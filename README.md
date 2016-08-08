@@ -7,17 +7,21 @@ As a result, the spark-json-schema library allows to verify the input data befor
 
 # Quickstart
 
-Include the library under the following coordinates
+Include the library under the following coordinates:
 
+    libraryDependencies += "de.zalando.payana" % "spark-json-schema" % "0.1-SNAPSHOT"
 
 Parse a given json-schema file by providing the path to the input file:
-
-
+    
+    val schema = SchemaConverter.convert("schemaFile.json")
+    
 Use the created schema when loading json-files into Spark:
- 
+    
+    val json = sqlContext.read.schema(schema).json(source)
  
 Files that are not according to the schema are marked as `null` and can be filtered out:
-  
+    
+    todo...
  
 After these steps you can be sure that all files that were loaded for further processing comply to your schema.
 
