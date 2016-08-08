@@ -1,10 +1,14 @@
 name := "spark-json-schema"
 
-version := "0.1-SNAPSHOT"
-
-scalaVersion := "2.11.7"
-
-organization := "org.zalando"
+version in ThisBuild := "0.1-SNAPSHOT"
+organization := "de.zalando.payana"
 
 libraryDependencies += "org.apache.spark" %% "spark-core" % "1.6.0"
 libraryDependencies += "org.apache.spark" %% "spark-mllib" % "1.6.0"
+
+addSbtPlugin("org.scalariform" % "sbt-scalariform" % "1.6.0")
+addSbtPlugin("org.scalastyle" % "scalastyle-sbt-plugin" % "0.8.0")
+
+sbtPlugin := true
+publishMavenStyle := true
+scalacOptions += "-deprecation"
