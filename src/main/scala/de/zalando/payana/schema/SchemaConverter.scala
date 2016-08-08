@@ -1,11 +1,7 @@
-package de.zalando.payana.tools.converter
+package de.zalando.payana.schema
 
 import org.apache.spark.sql.types._
 import play.api.libs.json._
-
-import scala.annotation.tailrec
-import scala.collection.Set
-import scala.io.Source.fromFile
 
 /**
   * Schema Converter for getting schema in json format into a spark Structure

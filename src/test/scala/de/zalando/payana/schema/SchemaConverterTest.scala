@@ -1,23 +1,14 @@
-package de.zalando.payana.tools.converter
+package de.zalando.payana.schema
 
-import de.zalando.payana.lf.base.SparkContextSuite
-import de.zalando.payana.lf.data.JsonFile
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.AnalysisException
 import org.apache.spark.sql.types._
-import play.api.libs.json._
+import org.scalatest.FunSuite
 
-class SchemaConverterTest extends SparkContextSuite {
+class SchemaConverterTest extends FunSuite {
 
   def testSchema: StructType = {
-    val schemaPath =
-      File(settings.repositoryDefaultInputPath, "schema", "testJsonSchema.json").pathAsString
-    SchemaConverter.convert(schemaPath)
-  }
-
-  def fullSchema: StructType = {
-    val schemaPath =
-      File("schema", "json", "trainingDataJsonSchema.json").pathAsString
+    val schemaPath = "src/test/resources/testJsonSchema.json"
     SchemaConverter.convert(schemaPath)
   }
 
