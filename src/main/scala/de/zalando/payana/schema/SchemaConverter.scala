@@ -3,6 +3,9 @@ package de.zalando.payana.schema
 import org.apache.spark.sql.types._
 import play.api.libs.json._
 
+import scala.annotation.tailrec
+import scala.collection.Set
+
 /**
   * Schema Converter for getting schema in json format into a spark Structure
   *
@@ -66,7 +69,7 @@ object SchemaConverter {
   }
 
   def loadSchemaJson(filePath: String): JsValue = {
-    val source = fromFile(filePath)
+    val source = scala.io.Source.fromFile(filePath)
     try Json.parse(source.getLines.mkString)
     finally source.close()
   }

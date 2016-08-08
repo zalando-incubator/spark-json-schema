@@ -26,3 +26,12 @@ Files that are not according to the schema are marked as `null` and can be filte
 After these steps you can be sure that all files that were loaded for further processing comply to your schema.
 
 
+# Release
+To build a new release there must be no uncommitted changes in the local git working copy.
+Once this requirement is met you have to run the following command
+
+	sbt release
+
+In the process you will be asked for version numbers, but sensible default are provided.
+In case the library has a dependency to an external "SNAPSHOT" version a confirmation is in required as otherwise the release wont be started.
+

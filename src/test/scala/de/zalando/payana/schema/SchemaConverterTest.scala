@@ -1,12 +1,17 @@
 package de.zalando.payana.schema
 
-import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.AnalysisException
+import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.sql.types._
+import org.apache.spark.sql.{AnalysisException, SQLContext}
 import org.scalatest.FunSuite
+import play.api.libs.json._
 
 class SchemaConverterTest extends FunSuite {
 
+  lazy val sparkContext: SparkContext = generateSparkContext()
+
+  lazy val sqlContext: SQLContext = generateSparkSQLContext()
+  
   def testSchema: StructType = {
     val schemaPath = "src/test/resources/testJsonSchema.json"
     SchemaConverter.convert(schemaPath)
@@ -61,7 +66,7 @@ class SchemaConverterTest extends FunSuite {
               "type": "string",
               "name": "zip"
     }}}}}"""))
-    val jsonString = sparkContext.parallelize(Seq(
+    val jsonString = generateSparkContext.parallelize(Seq(
       """{"name": "aaa", "address": {}, "foo": "bar"}""",
       """{"name": "bbb", "address": {}}"""
     ))
@@ -84,4 +89,13 @@ class SchemaConverterTest extends FunSuite {
     assert(dbSchema.select("address.zip").collect()(0)(0) === null)
     intercept[AnalysisException] { dbSchema.select("foo") }
   }
+
+  def generateSparkContext(): SparkContext = {
+    System.clearProperty("spark.driver.port")
+    System.clearProperty("spark.hostPort")
+
+    new SparkContext(new SparkConf().setMaster("local").setAppName("testapp") )
+  }
+
+  def generateSparkSQLContext(): SQLContext = new org.apache.spark.sql.SQLContext(sparkContext)
 }
