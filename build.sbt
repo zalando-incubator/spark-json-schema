@@ -1,10 +1,16 @@
 name := "spark-json-schema"
 
-version := "0.1-SNAPSHOT"
+version in ThisBuild := "0.1-SNAPSHOT"
+organization := "de.zalando.payana"
 
-scalaVersion := "2.11.7"
+scalaVersion := "2.11.8"
 
-organization := "org.zalando"
+libraryDependencies += "org.apache.spark" %% "spark-sql" % "1.6.2"
+libraryDependencies += "com.typesafe.play" %% "play-json" % "2.5.4"
+dependencyOverrides ++= Set("com.fasterxml.jackson.core" % "jackson-databind" % "2.4.4")
 
-libraryDependencies += "org.apache.spark" %% "spark-core" % "1.6.0"
-libraryDependencies += "org.apache.spark" %% "spark-mllib" % "1.6.0"
+libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.0" % "test"
+
+publishMavenStyle := true
+scalacOptions += "-deprecation"
+
