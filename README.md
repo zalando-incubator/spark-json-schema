@@ -1,9 +1,14 @@
 # spark-json-schema
 
 This goal of the spark-json-schema library is to support input data integrity when loading json data into Apache Spark.
-For this purpose, the library is able to read a given json-schema as input and to generate a Spark representation of this schema, which can be used during loading json-files into Spark.
-Without such a schema, Spark uses its built-in schema inference, which can result in incomplete schema representations due to missing fields in the input data.
-As a result, the spark-json-schema library allows to verify the input data before learning, which avoids the risk of faulty input data.
+For this purpose the library:
+    
+    - Reads in an existing json-schema file
+    - Parses the json-schema and builds a Spark DataFrame schema
+
+This generated schema can be used when loading json data into Spark.
+This verifies that the input data conforms to the given schema and enables to filter out corrupt input data.
+ 
 
 # Quickstart
 
