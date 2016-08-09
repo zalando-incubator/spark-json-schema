@@ -10,7 +10,6 @@ libraryDependencies += "com.typesafe.play" %% "play-json" % "2.5.4"
 
 libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.0" % "test"
 
-sbtPlugin := true
 publishMavenStyle := true
 scalacOptions += "-deprecation"
 

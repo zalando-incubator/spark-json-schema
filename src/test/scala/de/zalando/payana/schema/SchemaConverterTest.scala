@@ -1,6 +1,6 @@
 package de.zalando.payana.schema
 
-import org.apache.spark.sql.SQLContext
+import org.apache.spark.sql.{AnalysisException, SQLContext}
 import org.apache.spark.sql.types._
 import org.apache.spark.{SparkConf, SparkContext}
 import org.scalatest.FunSuite
@@ -16,7 +16,7 @@ class SchemaConverterTest extends FunSuite {
     SchemaConverter.convert(schemaPath)
   }
   
-  /*
+
   test("should convert schema.json into spark StructType") {
     val expectedStruct = StructType(Array(
       StructField("object", StructType(Array(
@@ -43,9 +43,8 @@ class SchemaConverterTest extends FunSuite {
 
     assert(testSchema === expectedStruct)
   }
-  */
 
-/*
+
 test("data fields with only nulls shouldn't be removed") {
   val schema = SchemaConverter.convert(Json.parse("""{
     "$schema": "smallTestSchema",
@@ -91,7 +90,7 @@ test("data fields with only nulls shouldn't be removed") {
   assert(dbSchema.select("address.zip").collect()(0)(0) === null)
   intercept[AnalysisException] { dbSchema.select("foo") }
 }
-*/
+
 
 def generateSparkContext(): SparkContext = {
   System.clearProperty("spark.driver.port")
