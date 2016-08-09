@@ -1,23 +1,18 @@
 package de.zalando.payana.schema
 
-import org.apache.spark.sql.{AnalysisException, SQLContext}
+import org.apache.spark.sql.AnalysisException
 import org.apache.spark.sql.types._
-import org.apache.spark.{SparkConf, SparkContext}
 import org.scalatest.FunSuite
 import play.api.libs.json.Json
+import SparkTestEnv._
 
 class SchemaConverterTest extends FunSuite {
-
-  lazy val sparkContext: SparkContext = generateSparkContext()
-
-  lazy val sqlContext: SQLContext = generateSparkSQLContext()
   
   def testSchema: StructType = {
     val schemaPath = "src/test/resources/testJsonSchema.json"
     SchemaConverter.convert(schemaPath)
   }
   
-
   test("should convert schema.json into spark StructType") {
     val expectedStruct = StructType(Array(
       StructField("object", StructType(Array(
@@ -68,7 +63,7 @@ test("data fields with only nulls shouldn't be removed") {
             "type": "string",
             "name": "zip"
   }}}}}"""))
-  val jsonString = generateSparkContext.parallelize(Seq(
+  val jsonString = sparkContext.parallelize(Seq(
     """{"name": "aaa", "address": {}, "foo": "bar"}""",
     """{"name": "bbb", "address": {}}"""
   ))
@@ -91,14 +86,4 @@ test("data fields with only nulls shouldn't be removed") {
   assert(dbSchema.select("address.zip").collect()(0)(0) === null)
   intercept[AnalysisException] { dbSchema.select("foo") }
 }
-
-
-def generateSparkContext(): SparkContext = {
-  System.clearProperty("spark.driver.port")
-  System.clearProperty("spark.hostPort")
-
-  new SparkContext(new SparkConf().setMaster("local").setAppName("testapp") )
-}
-
-def generateSparkSQLContext(): SQLContext = new org.apache.spark.sql.SQLContext(sparkContext)
 }

@@ -7,6 +7,7 @@ scalaVersion := "2.11.8"
 
 libraryDependencies += "org.apache.spark" %% "spark-sql" % "1.6.2"
 libraryDependencies += "com.typesafe.play" %% "play-json" % "2.5.4"
+dependencyOverrides ++= Set("com.fasterxml.jackson.core" % "jackson-databind" % "2.4.4")
 
 libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.0" % "test"
 
