@@ -32,7 +32,7 @@ After these steps you can be sure that all files that were loaded for further pr
 
 # Contact
 
-Feel free to contact us at team-payana@zaland.de
+Feel free to contact us at team-payana@zalando.de
 
 # License
 
