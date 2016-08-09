@@ -1,4 +1,4 @@
-package de.zalando.payana.schema
+package org.zalando.spark.jsonschema
 
 import org.apache.spark.sql.AnalysisException
 import org.apache.spark.sql.types._
