@@ -4,6 +4,7 @@ import org.apache.spark.sql.{AnalysisException, SQLContext}
 import org.apache.spark.sql.types._
 import org.apache.spark.{SparkConf, SparkContext}
 import org.scalatest.FunSuite
+import play.api.libs.json.Json
 
 class SchemaConverterTest extends FunSuite {
 
