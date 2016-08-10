@@ -1,4 +1,4 @@
-package de.zalando.payana.schema
+package org.zalando.spark.jsonschema
 
 import org.apache.spark.sql.types._
 import play.api.libs.json._
