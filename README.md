@@ -1,3 +1,6 @@
+[![Build Status](https://travis-ci.org/zalando-incubator/spark-json-schema.svg?branch=master)](https://travis-ci.org/zalando-incubator/spark-json-schema)
+[![MIT licensed](https://img.shields.io/badge/license-MIT-green.svg)](https://raw.githubusercontent.com/zalando-incubator/spark-json-schema/master/LICENSE)
+
 # spark-json-schema
 
 This goal of the spark-json-schema library is to support input data integrity when loading json data into Apache Spark.
