@@ -1,4 +1,6 @@
 approvals:
+  pattern: "^(:\\+1:|👍)"   # must start with thumbs up
+  ignore: none              # allow pr-opener and last committer to ack PRs
   groups:
     zalando:
       minimum: 2
