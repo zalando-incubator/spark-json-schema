@@ -1,6 +1,4 @@
 approvals:
-  pattern: "^(:\\+1:|👍)"   # must start with thumbs up
-  ignore: none              # allow pr-opener and last committer to ack PRs
   groups:
     zalando:
       minimum: 2
@@ -8,9 +6,5 @@ approvals:
         orgs:
           - "zalando"
 
-# team should be valid team id in team service https://teams.auth.zalando.com/api/teams/:id
 X-Zalando-Team: "payana"
-
-# type should be one of [code, doc, config, tools, secrets]
-# code will be the default value, if X-Zalando-Type is not found in .zappr.yml
 X-Zalando-Type: code
