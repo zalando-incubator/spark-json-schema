@@ -67,11 +67,12 @@ object SchemaConverter {
       )
     }
   }
-
+  
   def loadSchemaJson(filePath: String): JsValue = {
-    val source = scala.io.Source.fromFile(filePath)
-    try Json.parse(source.getLines.mkString)
-    finally source.close()
+    val inputStream = getClass.getResourceAsStream("/schema/json/trainingDataJsonSchema.json")
+    val jsonString = scala.io.Source.fromInputStream(inputStream).mkString
+    try Json.parse(jsonString)
+    finally inputStream.close()
   }
 
   @tailrec
