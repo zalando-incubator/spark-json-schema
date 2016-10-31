@@ -5,6 +5,7 @@ approvals:
       from:
         orgs:
           - "zalando"
+          - "zalando-incubator"
 
 X-Zalando-Team: "payana"
 X-Zalando-Type: code
