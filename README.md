@@ -16,21 +16,21 @@ This verifies that the input data conforms to the given schema and enables to fi
 # Quickstart
 
 Include the library under the following coordinates:
-
-    libraryDependencies += "org.zalando" %% "spark-json-schema" % "0.2"
-
+```scala
+libraryDependencies += "org.zalando" %% "spark-json-schema" % "0.2"
+```
 Parse a given json-schema file by providing the path to the input file:
-    
-    val schema = SchemaConverter.convert("schemaFile.json")
-    
+```scala
+val schema = SchemaConverter.convert("schemaFile.json")
+```
 Use the created schema when loading json-files into Spark:
-    
-    val dataFrame = sqlContext.read.schema(schema).json(source)
- 
+```scala
+val dataFrame = sqlContext.read.schema(schema).json(source)
+```
 Jsons that are not according to the schema have only `null` in the dataFrame fields and can be filtered out:
-    
-    val filteredData = dataFrame.rdd.filter( x => Range(0, x.length).contains(!x.isNullAt(_)))
-    
+```scala
+val filteredData = dataFrame.rdd.filter( x => Range(0, x.length).contains(!x.isNullAt(_)))
+```
 After these steps you can be sure that all files that were loaded for further processing comply to your schema.
 
 # Contact
