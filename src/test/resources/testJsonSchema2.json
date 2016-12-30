@@ -1,0 +1,25 @@
+{
+  "$schema": "smallTestSchema",
+  "id": "smallTestSchema",
+  "type": "object",
+  "name": "/",
+  "properties": {
+    "name": {
+      "id": "smallTestSchema/name",
+      "type": "string",
+      "name": "name"
+    },
+    "address": {
+      "id": "smallTestSchema/address/",
+      "type": "object",
+      "name": "address",
+      "properties": {
+        "zip": {
+          "id": "smallTestSchema/address/zip",
+          "type": ["string", "null"],
+          "name": "zip"
+        }
+      }
+    }
+  }
+}

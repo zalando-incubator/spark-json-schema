@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.org/zalando-incubator/spark-json-schema.svg?branch=master)](https://travis-ci.org/zalando-incubator/spark-json-schema)
+[![codecov.io](http://codecov.io/github/zalando-incubator/spark-json-schema/coverage.svg?branch=master)](http://codecov.io/github/zalando-incubator/spark-json-schema?branch=master)
 [![MIT licensed](https://img.shields.io/badge/license-MIT-green.svg)](https://raw.githubusercontent.com/zalando-incubator/spark-json-schema/master/LICENSE)
 
 # spark-json-schema
@@ -17,7 +18,7 @@ This verifies that the input data conforms to the given schema and enables to fi
 
 Include the library under the following coordinates:
 ```scala
-libraryDependencies += "org.zalando" %% "spark-json-schema" % "0.2"
+libraryDependencies += "org.zalando" %% "spark-json-schema" % "0.3"
 ```
 Parse a given json-schema file by providing the path to the input file:
 ```scala

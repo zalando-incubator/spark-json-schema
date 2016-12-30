@@ -1,15 +1,18 @@
 name := "spark-json-schema"
 
-version in ThisBuild := "0.2"
+version in ThisBuild := "0.3"
 organization := "org.zalando"
 
 scalaVersion := "2.11.8"
 
-libraryDependencies += "org.apache.spark" %% "spark-sql" % "1.6.2"  % Provided
-libraryDependencies += "com.typesafe.play" %% "play-json" % "2.5.4"
-dependencyOverrides ++= Set("com.fasterxml.jackson.core" % "jackson-databind" % "2.4.4")
+libraryDependencies += "org.apache.spark" %% "spark-sql" % "2.0.1"  % Provided
+libraryDependencies += "com.typesafe.play" %% "play-json" % "2.5.10"
+dependencyOverrides ++= Set("com.fasterxml.jackson.core" % "jackson-databind" % "2.6.5")
 
 libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.0" % "test"
+
+scapegoatVersion := "1.3.0"
+scapegoatIgnoredFiles := Seq(s"${target.value}.*.scala")
 
 licenses += ("MIT", url("http://opensource.org/licenses/MIT"))
 
@@ -44,4 +47,4 @@ pomExtra := (
       <url>https://github.com/zalando</url>
     </developer>
   </developers>
-  )
+)
