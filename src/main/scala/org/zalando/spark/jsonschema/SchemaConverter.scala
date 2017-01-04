@@ -33,6 +33,7 @@ object SchemaConverter {
   val typeMap = Map(
     "string" -> StringType,
     "number" -> DoubleType,
+    "float" -> FloatType,
     "integer" -> LongType,
     "boolean" -> BooleanType,
     "object" -> StructType,
