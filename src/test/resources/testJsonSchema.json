@@ -132,6 +132,13 @@
       "description": "to do",
       "name": "number"
     },
+    "float": {
+      "id": "testSchema/float",
+      "type": "float",
+      "title": "Test float schema.",
+      "description": "to do",
+      "name": "float"
+    },
     "nullable": {
       "id": "testSchema/nullable",
       "type": ["number", "null"],
