@@ -26,6 +26,7 @@ class SchemaConverterTest extends FunSuite {
       StructField("integer", LongType, nullable = false),
       StructField("string", StringType, nullable = false),
       StructField("number", DoubleType, nullable = false),
+      StructField("float", FloatType, nullable = false),
       StructField("nullable", DoubleType, nullable = true),
       StructField("boolean", BooleanType, nullable = false),
       StructField("additionalProperty", StringType, nullable = false)
