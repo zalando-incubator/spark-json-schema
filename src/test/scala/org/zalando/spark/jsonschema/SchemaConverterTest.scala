@@ -39,13 +39,13 @@ class SchemaConverterTest extends FunSuite {
   test("data fields with only nulls shouldn't be removed") {
     val schema = SchemaConverter.convert(getClass.getResource("/testJsonSchema2.json").getPath)
 
-    val jsonString = sparkSession.sparkContext.parallelize(Seq(
+    val jsonString = sparkContext.parallelize(Seq(
       """{"name": "aaa", "address": {}, "foo": "bar"}""",
       """{"name": "bbb", "address": {}}"""
     ))
 
     // without SchemaConverter
-    val dbNoSchema = sparkSession.read.json(jsonString)
+    val dbNoSchema = sqlContext.read.json(jsonString)
     assert(dbNoSchema.schema != schema)
     assert(dbNoSchema.schema === StructType(Array(
       StructField("foo", StringType, nullable = true),
@@ -56,7 +56,7 @@ class SchemaConverterTest extends FunSuite {
     assert(dbNoSchema.select("foo").collect()(0)(0) === "bar")
 
     // with SchemaConverter
-    val dbWithSchema = sparkSession.read.schema(schema).json(jsonString)
+    val dbWithSchema = sqlContext.read.schema(schema).json(jsonString)
     assert(dbWithSchema.schema === schema)
     assert(dbWithSchema.select("name").collect()(0)(0) === "aaa")
     assert(dbWithSchema.select("address.zip").collect()(0)(0) === null)

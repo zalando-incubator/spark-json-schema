@@ -1,6 +1,6 @@
-[![Build Status](https://travis-ci.org/zalando-incubator/spark-json-schema.svg?branch=master)](https://travis-ci.org/zalando-incubator/spark-json-schema)
-[![codecov.io](http://codecov.io/github/zalando-incubator/spark-json-schema/coverage.svg?branch=master)](http://codecov.io/github/zalando-incubator/spark-json-schema?branch=master)
-[![MIT licensed](https://img.shields.io/badge/license-MIT-green.svg)](https://raw.githubusercontent.com/zalando-incubator/spark-json-schema/master/LICENSE)
+[![Build Status](https://travis-ci.org/zalando-incubator/spark-json-schema.svg?branch=scala_2.10)](https://travis-ci.org/zalando-incubator/spark-json-schema)
+[![codecov.io](http://codecov.io/github/zalando-incubator/spark-json-schema/coverage.svg?branch=scala_2.10)](http://codecov.io/github/zalando-incubator/spark-json-schema?branch=master)
+[![MIT licensed](https://img.shields.io/badge/license-MIT-green.svg)](https://raw.githubusercontent.com/zalando-incubator/spark-json-schema/spark_2.10/LICENSE)
 
 # spark-json-schema
 
