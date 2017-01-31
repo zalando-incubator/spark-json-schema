@@ -30,7 +30,13 @@ val dataFrame = sqlContext.read.schema(schema).json(source)
 ```
 Jsons that are not according to the schema have only `null` in the dataFrame fields and can be filtered out:
 ```scala
-val filteredData = dataFrame.rdd.filter( x => Range(0, x.length).contains(!x.isNullAt(_)))
+val filteredRdd = inputRdds.filter { row =>
+      val notValid = Range(0, row.length).map(index => row.get(index)).contains(null)
+      if (notValid) {
+        // TODO: Do something with dropped JSONs
+      }
+      !notValid
+    }
 ```
 After these steps you can be sure that all files that were loaded for further processing comply to your schema.
 

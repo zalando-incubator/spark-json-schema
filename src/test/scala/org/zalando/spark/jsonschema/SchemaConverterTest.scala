@@ -2,37 +2,42 @@ package org.zalando.spark.jsonschema
 
 import org.apache.spark.sql.AnalysisException
 import org.apache.spark.sql.types._
-import org.scalatest.FunSuite
+import org.scalatest.{FunSuite, Matchers}
 import org.zalando.spark.jsonschema.SparkTestEnv._
 
-class SchemaConverterTest extends FunSuite {
+class SchemaConverterTest extends FunSuite with Matchers {
+
+  val expectedStruct = StructType(Array(
+    StructField("object", StructType(Array(
+      StructField("item1", StringType, nullable = false),
+      StructField("item2", StringType, nullable = false)
+    )), nullable = false),
+    StructField("array", ArrayType(StructType(Array(
+      StructField("itemProperty1", StringType, nullable = false),
+      StructField("itemProperty2", DoubleType, nullable = false)
+    ))), nullable = false),
+    StructField("structure", StructType(Array(
+      StructField("nestedArray", ArrayType(StructType(Array(
+        StructField("key", StringType, nullable = false),
+        StructField("value", LongType, nullable = false)
+      ))), nullable = false)
+    )), nullable = false),
+    StructField("integer", LongType, nullable = false),
+    StructField("string", StringType, nullable = false),
+    StructField("number", DoubleType, nullable = false),
+    StructField("float", FloatType, nullable = false),
+    StructField("nullable", DoubleType, nullable = true),
+    StructField("boolean", BooleanType, nullable = false),
+    StructField("additionalProperty", StringType, nullable = false)
+  ))
 
   test("should convert schema.json into spark StructType") {
-    val expectedStruct = StructType(Array(
-      StructField("object", StructType(Array(
-        StructField("item1", StringType, nullable = false),
-        StructField("item2", StringType, nullable = false)
-      )), nullable = false),
-      StructField("array", ArrayType(StructType(Array(
-        StructField("itemProperty1", StringType, nullable = false),
-        StructField("itemProperty2", DoubleType, nullable = false)
-      ))), nullable = false),
-      StructField("structure", StructType(Array(
-        StructField("nestedArray", ArrayType(StructType(Array(
-          StructField("key", StringType, nullable = false),
-          StructField("value", LongType, nullable = false)
-        ))), nullable = false)
-      )), nullable = false),
-      StructField("integer", LongType, nullable = false),
-      StructField("string", StringType, nullable = false),
-      StructField("number", DoubleType, nullable = false),
-      StructField("float", FloatType, nullable = false),
-      StructField("nullable", DoubleType, nullable = true),
-      StructField("boolean", BooleanType, nullable = false),
-      StructField("additionalProperty", StringType, nullable = false)
-    ))
-
     val testSchema = SchemaConverter.convert(getClass.getResource("/testJsonSchema.json").getPath)
+    assert(testSchema === expectedStruct)
+  }
+
+  test("should convert schema.json content into spark StructType") {
+    val testSchema = SchemaConverter.convertContent(getTestResourcesLines("/testJsonSchema.json"))
     assert(testSchema === expectedStruct)
   }
 
@@ -52,7 +57,9 @@ class SchemaConverterTest extends FunSuite {
       StructField("name", StringType, nullable = true)
     )))
     assert(dbNoSchema.select("name").collect()(0)(0) === "aaa")
-    intercept[AnalysisException] { dbNoSchema.select("address") }
+    intercept[AnalysisException] {
+      dbNoSchema.select("address")
+    }
     assert(dbNoSchema.select("foo").collect()(0)(0) === "bar")
 
     // with SchemaConverter
@@ -60,6 +67,8 @@ class SchemaConverterTest extends FunSuite {
     assert(dbWithSchema.schema === schema)
     assert(dbWithSchema.select("name").collect()(0)(0) === "aaa")
     assert(dbWithSchema.select("address.zip").collect()(0)(0) === null)
-    intercept[AnalysisException] { dbWithSchema.select("foo") }
+    intercept[AnalysisException] {
+      dbWithSchema.select("foo")
+    }
   }
 }

@@ -30,7 +30,7 @@ object SchemaConverter {
   val SchemaStructContents = "properties"
   val SchemaArrayContents = "items"
   val SchemaRoot = "/"
-  val typeMap = Map(
+  val TypeMap = Map(
     "string" -> StringType,
     "number" -> DoubleType,
     "float" -> FloatType,
@@ -40,7 +40,10 @@ object SchemaConverter {
     "array" -> ArrayType
   )
 
+  def convertContent(schemaContent: String): StructType = convert(parseSchemaJson(schemaContent))
+
   def convert(inputPath: String): StructType = convert(loadSchemaJson(inputPath))
+
   def convert(inputSchema: JsValue): StructType = {
     val name = getJsonName(inputSchema)
     val typeName = getJsonType(inputSchema).typeName
@@ -79,10 +82,12 @@ object SchemaConverter {
     }
   }
 
+  private def parseSchemaJson(schemaContent: String) = Json.parse(schemaContent)
+
   def loadSchemaJson(filePath: String): JsValue = {
     val source = Source.fromFile(filePath)
     try {
-      Json.parse(source.getLines.mkString)
+      parseSchemaJson(source.getLines.mkString)
     } finally {
       source.close()
     }
@@ -100,7 +105,7 @@ object SchemaConverter {
 
   private def addJsonField(schema: StructType, json: JsValue): StructType = {
     val fieldType = getJsonType(json)
-    val (dataType, nullable) = typeMap(fieldType.typeName) match {
+    val (dataType, nullable) = TypeMap(fieldType.typeName) match {
 
       case dataType: DataType =>
         (dataType, fieldType.nullable)
