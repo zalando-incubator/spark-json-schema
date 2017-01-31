@@ -16,7 +16,7 @@ object SparkTestEnv {
 
   lazy val sqlContext: SQLContext = new SQLContext(sparkContext)
 
-  def getTestResourcesLines(relativePath: String): String = {
+  def getTestResourceContent(relativePath: String): String = {
     val relPath = getClass.getResource(relativePath)
     require(relPath != null, s"Path can not be reached: $relativePath")
     Source.fromURL(relPath).mkString

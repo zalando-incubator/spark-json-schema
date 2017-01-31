@@ -37,7 +37,7 @@ class SchemaConverterTest extends FunSuite with Matchers {
   }
 
   test("should convert schema.json content into spark StructType") {
-    val testSchema = SchemaConverter.convertContent(getTestResourcesLines("/testJsonSchema.json"))
+    val testSchema = SchemaConverter.convertContent(getTestResourceContent("/testJsonSchema.json"))
     assert(testSchema === expectedStruct)
   }
 
