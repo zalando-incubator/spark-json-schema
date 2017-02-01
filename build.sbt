@@ -9,7 +9,7 @@ libraryDependencies += "org.apache.spark" %% "spark-sql" % "1.6.2" % Provided
 libraryDependencies += "com.typesafe.play" %% "play-json" % "2.4.10"
 dependencyOverrides ++= Set("com.fasterxml.jackson.core" % "jackson-databind" % "2.4.4")
 
-libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.0" % "test"
+libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.1" % "test"
 
 licenses += ("MIT", url("http://opensource.org/licenses/MIT"))
 
