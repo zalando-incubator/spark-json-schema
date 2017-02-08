@@ -32,12 +32,12 @@ class SchemaConverterTest extends FunSuite {
       StructField("additionalProperty", StringType, nullable = false)
     ))
 
-    val testSchema = SchemaConverter.convert(getClass.getResource("/testJsonSchema.json").getPath)
+    val testSchema = SchemaConverter.convert("/testJsonSchema.json")
     assert(testSchema === expectedStruct)
   }
 
   test("data fields with only nulls shouldn't be removed") {
-    val schema = SchemaConverter.convert(getClass.getResource("/testJsonSchema2.json").getPath)
+    val schema = SchemaConverter.convert("/testJsonSchema2.json")
 
     val jsonString = sparkSession.sparkContext.parallelize(Seq(
       """{"name": "aaa", "address": {}, "foo": "bar"}""",
