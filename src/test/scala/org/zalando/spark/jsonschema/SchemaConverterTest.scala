@@ -3,16 +3,10 @@ package org.zalando.spark.jsonschema
 import org.apache.spark.sql.AnalysisException
 import org.apache.spark.sql.types._
 import org.scalatest.FunSuite
-import play.api.libs.json.Json
-import SparkTestEnv._
+import org.zalando.spark.jsonschema.SparkTestEnv._
 
 class SchemaConverterTest extends FunSuite {
-  
-  def testSchema: StructType = {
-    val schemaPath = "src/test/resources/testJsonSchema.json"
-    SchemaConverter.convert(schemaPath)
-  }
-  
+
   test("should convert schema.json into spark StructType") {
     val expectedStruct = StructType(Array(
       StructField("object", StructType(Array(
@@ -32,58 +26,40 @@ class SchemaConverterTest extends FunSuite {
       StructField("integer", LongType, nullable = false),
       StructField("string", StringType, nullable = false),
       StructField("number", DoubleType, nullable = false),
+      StructField("float", FloatType, nullable = false),
       StructField("nullable", DoubleType, nullable = true),
       StructField("boolean", BooleanType, nullable = false),
       StructField("additionalProperty", StringType, nullable = false)
     ))
 
+    val testSchema = SchemaConverter.convert(getClass.getResource("/testJsonSchema.json").getPath)
     assert(testSchema === expectedStruct)
   }
 
+  test("data fields with only nulls shouldn't be removed") {
+    val schema = SchemaConverter.convert(getClass.getResource("/testJsonSchema2.json").getPath)
 
-test("data fields with only nulls shouldn't be removed") {
-  val schema = SchemaConverter.convert(Json.parse("""{
-    "$schema": "smallTestSchema",
-    "id": "smallTestSchema",
-    "type": "object",
-    "name": "/",
-    "properties": {
-      "name": {
-        "id": "smallTestSchema/name",
-        "type": "string",
-        "name": "name"
-      },
-      "address": {
-        "id": "smallTestSchema/address/",
-        "type": "object",
-        "name": "address",
-        "properties": {
-          "zip": {
-            "id": "smallTestSchema/address/zip",
-            "type": "string",
-            "name": "zip"
-  }}}}}"""))
-  val jsonString = sparkContext.parallelize(Seq(
-    """{"name": "aaa", "address": {}, "foo": "bar"}""",
-    """{"name": "bbb", "address": {}}"""
-  ))
+    val jsonString = sparkSession.sparkContext.parallelize(Seq(
+      """{"name": "aaa", "address": {}, "foo": "bar"}""",
+      """{"name": "bbb", "address": {}}"""
+    ))
 
-  // without SchemaConverter
-  val db = sqlContext.read.json(jsonString)
-  assert(db.schema != schema)
-  assert(db.schema === StructType(Array(
-    StructField("foo", StringType, nullable = true),
-    StructField("name", StringType, nullable = true)
-  )))
-  assert(db.select("name").collect()(0)(0) === "aaa")
-  intercept[AnalysisException] { db.select("address") }
-  assert(db.select("foo").collect()(0)(0) === "bar")
+    // without SchemaConverter
+    val dbNoSchema = sparkSession.read.json(jsonString)
+    assert(dbNoSchema.schema != schema)
+    assert(dbNoSchema.schema === StructType(Array(
+      StructField("foo", StringType, nullable = true),
+      StructField("name", StringType, nullable = true)
+    )))
+    assert(dbNoSchema.select("name").collect()(0)(0) === "aaa")
+    intercept[AnalysisException] { dbNoSchema.select("address") }
+    assert(dbNoSchema.select("foo").collect()(0)(0) === "bar")
 
-  // with SchemaConverter
-  val dbSchema = sqlContext.read.schema(schema).json(jsonString)
-  assert(dbSchema.schema === schema)
-  assert(dbSchema.select("name").collect()(0)(0) === "aaa")
-  assert(dbSchema.select("address.zip").collect()(0)(0) === null)
-  intercept[AnalysisException] { dbSchema.select("foo") }
-}
+    // with SchemaConverter
+    val dbWithSchema = sparkSession.read.schema(schema).json(jsonString)
+    assert(dbWithSchema.schema === schema)
+    assert(dbWithSchema.select("name").collect()(0)(0) === "aaa")
+    assert(dbWithSchema.select("address.zip").collect()(0)(0) === null)
+    intercept[AnalysisException] { dbWithSchema.select("foo") }
+  }
 }

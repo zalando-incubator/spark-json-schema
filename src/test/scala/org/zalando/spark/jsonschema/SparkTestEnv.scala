@@ -1,16 +1,18 @@
 package org.zalando.spark.jsonschema
 
-import org.apache.spark.{SparkConf, SparkContext}
-import org.apache.spark.sql.SQLContext
+import org.apache.spark.sql.SparkSession
 
 object SparkTestEnv {
 
-  lazy val sparkContext: SparkContext = {
+  lazy val sparkSession: SparkSession = {
     System.clearProperty("spark.driver.port")
     System.clearProperty("spark.hostPort")
 
-    new SparkContext(new SparkConf().setMaster("local").setAppName("testapp") )
+    SparkSession.builder()
+      .master("local")
+      .appName("testapp")
+      .config("spark.ui.enabled", value = false)
+      .getOrCreate()
   }
 
-  lazy val sqlContext: SQLContext = new org.apache.spark.sql.SQLContext(sparkContext)
 }

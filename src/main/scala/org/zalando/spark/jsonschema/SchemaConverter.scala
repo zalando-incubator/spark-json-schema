@@ -4,22 +4,23 @@ import org.apache.spark.sql.types._
 import play.api.libs.json._
 
 import scala.annotation.tailrec
-import scala.collection.Set
 
 /**
-  * Schema Converter for getting schema in json format into a spark Structure
-  *
-  * The given schema for spark has almost no validity checks, so it will make sense
-  * to combine this with the schema-validator. For loading data with schema, data is converted
-  * to the type given in the schema. If this is not possible the whole row will be null (!).
-  * Fields can be null, no matter if the schema has nullable true or false. The converted
-  * schema doesn't check for 'enum' fields, i.e. fields which are limited to a given set.
-  * It also doesn't check for required fields or if additional properties are set to true
-  * or false. If a field is specified in the schema, than you can select it and it will
-  * be null if missing. If a field is not in the schema, it cannot be selected even if
-  * given in the dataset.
-  *
-  */
+ * Schema Converter for getting schema in json format into a spark Structure
+ *
+ * The given schema for spark has almost no validity checks, so it will make sense
+ * to combine this with the schema-validator. For loading data with schema, data is converted
+ * to the type given in the schema. If this is not possible the whole row will be null (!).
+ * A field can be null if its type is a 2-element array, one of which is "null". The converted
+ * schema doesn't check for 'enum' fields, i.e. fields which are limited to a given set.
+ * It also doesn't check for required fields or if additional properties are set to true
+ * or false. If a field is specified in the schema, than you can select it and it will
+ * be null if missing. If a field is not in the schema, it cannot be selected even if
+ * given in the dataset.
+ *
+ */
+case class SchemaType(typeName: String, nullable: Boolean)
+
 object SchemaConverter {
 
   val SchemaFieldName = "name"
@@ -31,6 +32,7 @@ object SchemaConverter {
   val typeMap = Map(
     "string" -> StringType,
     "number" -> DoubleType,
+    "float" -> FloatType,
     "integer" -> LongType,
     "boolean" -> BooleanType,
     "object" -> StructType,
@@ -43,7 +45,7 @@ object SchemaConverter {
     val typeName = getJsonType(inputSchema).typeName
     if (name == SchemaRoot && typeName == "object") {
       val properties = (inputSchema \ SchemaStructContents).as[JsObject]
-      convertJsonStruct(new StructType, properties, properties.keys)
+      convertJsonStruct(new StructType, properties, properties.keys.toList)
     } else {
       throw new IllegalArgumentException(
         s"schema needs root level called <$SchemaRoot> and root type <object>. " +
@@ -52,61 +54,68 @@ object SchemaConverter {
     }
   }
 
-  case class SchemaType(typeName: String, nullable: Boolean)
   def getJsonName(json: JsValue): String = (json \ SchemaFieldName).as[String]
+
   def getJsonId(json: JsValue): String = (json \ SchemaFieldId).as[String]
+
   def getJsonType(json: JsValue): SchemaType = {
     val id = getJsonId(json)
+
     (json \ SchemaFieldType).getOrElse(JsNull) match {
       case JsString(s) => SchemaType(s, nullable = false)
-      case JsArray(a) if a.size == 2 && a.count(_ != JsString("null")) == 1 =>
-        a.filter(_ != JsString("null")).map(i => SchemaType(i.as[String], nullable = true)).head
+      case JsArray(array) if array.size == 2 =>
+        array.find(_ != JsString("null"))
+          .map(i => SchemaType(i.as[String], nullable = true))
+          .getOrElse {
+            throw new IllegalArgumentException(
+              s"Incorrect definition of a nullable parameter at <$id>"
+            )
+          }
       case JsNull => throw new IllegalArgumentException(s"No <$SchemaType> in schema at <$id>")
       case t => throw new IllegalArgumentException(
         s"Unsupported type <${t.toString}> in schema at <$id>"
       )
     }
   }
-  
+
   def loadSchemaJson(filePath: String): JsValue = {
-    val inputStream = getClass.getResourceAsStream("/schema/json/trainingDataJsonSchema.json")
+    val inputStream = getClass.getResourceAsStream(filePath)
     val jsonString = scala.io.Source.fromInputStream(inputStream).mkString
     try Json.parse(jsonString)
     finally inputStream.close()
   }
 
   @tailrec
-  def convertJsonStruct(schema: StructType, json: JsValue, jsonKeys: Set[String]): StructType = {
-    if (jsonKeys.nonEmpty) {
-      val enrichedSchema = addJsonField(schema, (json \ jsonKeys.head).as[JsValue])
-      convertJsonStruct(enrichedSchema, json, jsonKeys.drop(1))
-    } else { schema }
-  }
-
-  def addJsonField(schema: StructType, json: JsValue): StructType = {
-    val fieldType = getJsonType(json)
-    typeMap(fieldType.typeName) match {
-      case d: DataType => schema.add(getJsonName(json), d, nullable = fieldType.nullable)
-      case ArrayType =>
-        addJsonArrayStructure(schema, json, JsPath \ SchemaArrayContents \ SchemaStructContents)
-      case StructType => addJsonObjectStructure(schema, json, JsPath \ SchemaStructContents)
+  private def convertJsonStruct(schema: StructType, json: JsObject, jsonKeys: List[String]): StructType = {
+    jsonKeys match {
+      case Nil => schema
+      case head :: tail =>
+        val enrichedSchema = addJsonField(schema, (json \ head).as[JsValue])
+        convertJsonStruct(enrichedSchema, json, tail)
     }
   }
 
-  private def addJsonStructure(schema: StructType, json: JsValue, contentPath: JsPath)(addStructure: StructType => DataType): StructType = {
+  private def addJsonField(schema: StructType, json: JsValue): StructType = {
+    val fieldType = getJsonType(json)
+    val (dataType, nullable) = typeMap(fieldType.typeName) match {
+
+      case dataType: DataType =>
+        (dataType, fieldType.nullable)
+
+      case ArrayType =>
+        val dataType = ArrayType(getDataType(json, JsPath \ SchemaArrayContents \ SchemaStructContents))
+        (dataType, getJsonType(json).nullable)
+
+      case StructType =>
+        val dataType = getDataType(json, JsPath \ SchemaStructContents)
+        (dataType, getJsonType(json).nullable)
+    }
+
+    schema.add(getJsonName(json), dataType, nullable = nullable)
+  }
+
+  private def getDataType(json: JsValue, contentPath: JsPath): DataType = {
     val content = contentPath.asSingleJson(json).as[JsObject]
-    schema.add(
-      getJsonName(json),
-      addStructure(convertJsonStruct(new StructType, content, content.keys)),
-      nullable = getJsonType(json).nullable
-    )
-  }
-
-  def addJsonObjectStructure(schema: StructType, json: JsValue, contentPath: JsPath): StructType = {
-    addJsonStructure(schema, json, contentPath)(structType => structType)
-  }
-
-  def addJsonArrayStructure(schema: StructType, json: JsValue, contentPath: JsPath): StructType = {
-    addJsonStructure(schema, json, contentPath)(structType => ArrayType(structType))
+    convertJsonStruct(new StructType, content, content.keys.toList)
   }
 }
