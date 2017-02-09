@@ -1,6 +1,6 @@
 name := "spark-json-schema"
 
-version in ThisBuild := "0.4"
+version in ThisBuild := "0.5"
 organization := "org.zalando"
 
 scalaVersion := "2.11.8"
@@ -24,7 +24,7 @@ publishTo := {
   if (isSnapshot.value)
     Some("snapshots" at nexus + "content/repositories/snapshots")
   else
-    Some("releases"  at nexus + "service/local/staging/deploy/maven2")
+    Some("releases" at nexus + "service/local/staging/deploy/maven2")
 }
 
 publishArtifact in Test := false
