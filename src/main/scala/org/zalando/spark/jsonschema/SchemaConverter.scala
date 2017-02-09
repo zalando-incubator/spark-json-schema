@@ -4,6 +4,7 @@ import org.apache.spark.sql.types._
 import play.api.libs.json._
 
 import scala.annotation.tailrec
+import scala.io.Source
 
 /**
  * Schema Converter for getting schema in json format into a spark Structure
@@ -29,7 +30,7 @@ object SchemaConverter {
   val SchemaStructContents = "properties"
   val SchemaArrayContents = "items"
   val SchemaRoot = "/"
-  val typeMap = Map(
+  val TypeMap = Map(
     "string" -> StringType,
     "number" -> DoubleType,
     "float" -> FloatType,
@@ -39,7 +40,10 @@ object SchemaConverter {
     "array" -> ArrayType
   )
 
+  def convertContent(schemaContent: String): StructType = convert(parseSchemaJson(schemaContent))
+
   def convert(inputPath: String): StructType = convert(loadSchemaJson(inputPath))
+
   def convert(inputSchema: JsValue): StructType = {
     val name = getJsonName(inputSchema)
     val typeName = getJsonType(inputSchema).typeName
@@ -78,10 +82,12 @@ object SchemaConverter {
     }
   }
 
+  private def parseSchemaJson(schemaContent: String) = Json.parse(schemaContent)
+
   def loadSchemaJson(filePath: String): JsValue = {
     val inputStream = getClass.getResourceAsStream(filePath)
-    val jsonString = scala.io.Source.fromInputStream(inputStream).mkString
-    try Json.parse(jsonString)
+    val jsonString = Source.fromInputStream(inputStream).mkString
+    try parseSchemaJson(jsonString)
     finally inputStream.close()
   }
 
@@ -97,7 +103,7 @@ object SchemaConverter {
 
   private def addJsonField(schema: StructType, json: JsValue): StructType = {
     val fieldType = getJsonType(json)
-    val (dataType, nullable) = typeMap(fieldType.typeName) match {
+    val (dataType, nullable) = TypeMap(fieldType.typeName) match {
 
       case dataType: DataType =>
         (dataType, fieldType.nullable)
