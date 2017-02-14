@@ -18,12 +18,9 @@ object SparkTestEnv {
   }
 
   def getTestResourceContent(relativePath: String): String = {
-    val inputStream = getClass.getResourceAsStream(relativePath)
-    try Source.fromInputStream(inputStream).mkString
-    catch {
-      case _: NullPointerException =>
-        throw new NullPointerException(s"No content found in $relativePath")
-    } finally inputStream.close()
+    val relPath = getClass.getResource(relativePath)
+    require(relPath != null, s"Path can not be reached: $relativePath")
+    Source.fromURL(relPath).mkString
   }
 
 }

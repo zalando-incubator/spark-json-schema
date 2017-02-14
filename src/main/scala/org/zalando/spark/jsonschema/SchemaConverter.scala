@@ -85,10 +85,9 @@ object SchemaConverter {
   private def parseSchemaJson(schemaContent: String) = Json.parse(schemaContent)
 
   def loadSchemaJson(filePath: String): JsValue = {
-    val inputStream = getClass.getResourceAsStream(filePath)
-    val jsonString = Source.fromInputStream(inputStream).mkString
-    try parseSchemaJson(jsonString)
-    finally inputStream.close()
+    val relPath = getClass.getResource(filePath)
+    require(relPath != null, s"Path can not be reached: $filePath")
+    parseSchemaJson(Source.fromURL(relPath).mkString)
   }
 
   @tailrec
