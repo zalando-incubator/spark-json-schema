@@ -2,7 +2,7 @@ package org.zalando.spark.jsonschema
 
 import org.apache.spark.sql.AnalysisException
 import org.apache.spark.sql.types._
-import org.scalatest.{FunSuite, Matchers}
+import org.scalatest.{ FunSuite, Matchers }
 import org.zalando.spark.jsonschema.SparkTestEnv._
 
 class SchemaConverterTest extends FunSuite with Matchers {
@@ -32,7 +32,7 @@ class SchemaConverterTest extends FunSuite with Matchers {
   ))
 
   test("should convert schema.json into spark StructType") {
-    val testSchema = SchemaConverter.convert(getClass.getResource("/testJsonSchema.json").getPath)
+    val testSchema = SchemaConverter.convert("/testJsonSchema.json")
     assert(testSchema === expectedStruct)
   }
 
@@ -42,7 +42,7 @@ class SchemaConverterTest extends FunSuite with Matchers {
   }
 
   test("data fields with only nulls shouldn't be removed") {
-    val schema = SchemaConverter.convert(getClass.getResource("/testJsonSchema2.json").getPath)
+    val schema = SchemaConverter.convert("/testJsonSchema2.json")
 
     val jsonString = sparkContext.parallelize(Seq(
       """{"name": "aaa", "address": {}, "foo": "bar"}""",

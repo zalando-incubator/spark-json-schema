@@ -21,4 +21,5 @@ object SparkTestEnv {
     require(relPath != null, s"Path can not be reached: $relativePath")
     Source.fromURL(relPath).mkString
   }
+
 }
