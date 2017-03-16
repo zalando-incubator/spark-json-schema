@@ -41,6 +41,12 @@ class SchemaConverterTest extends FunSuite with Matchers {
     assert(testSchema === expectedStruct)
   }
 
+  // 'id' and 'name' are optional according to http://json-schema.org/latest/json-schema-core.html
+  test("should support optional 'id' and 'name' properties") {
+    val testSchema = SchemaConverter.convert("/testJsonSchema3.json")
+    assert(testSchema === expectedStruct)
+  }
+
   test("data fields with only nulls shouldn't be removed") {
     val schema = SchemaConverter.convert("/testJsonSchema2.json")
 
