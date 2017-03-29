@@ -44,9 +44,9 @@ object SchemaConverter {
 
   def convert(inputPath: String): StructType = convert(loadSchemaJson(inputPath))
 
-  def convert(inputSchema: JsValue): StructType = {
-    val name = getJsonName(inputSchema)
-    val typeName = getJsonType(inputSchema).typeName
+  def convert(inputSchema: JsObject): StructType = {
+    val name = getJsonName(inputSchema).getOrElse("/")
+    val typeName = getJsonType(inputSchema, name).typeName
     if (name == SchemaRoot && typeName == "object") {
       val properties = (inputSchema \ SchemaStructContents).as[JsObject]
       convertJsonStruct(new StructType, properties, properties.keys.toList)
@@ -58,12 +58,12 @@ object SchemaConverter {
     }
   }
 
-  def getJsonName(json: JsValue): String = (json \ SchemaFieldName).as[String]
+  def getJsonName(json: JsValue): Option[String] = (json \ SchemaFieldName).asOpt[String]
 
-  def getJsonId(json: JsValue): String = (json \ SchemaFieldId).as[String]
+  def getJsonId(json: JsValue): Option[String] = (json \ SchemaFieldId).asOpt[String]
 
-  def getJsonType(json: JsValue): SchemaType = {
-    val id = getJsonId(json)
+  def getJsonType(json: JsObject, name: String): SchemaType = {
+    val id = getJsonId(json).getOrElse(name)
 
     (json \ SchemaFieldType).getOrElse(JsNull) match {
       case JsString(s) => SchemaType(s, nullable = false)
@@ -82,9 +82,9 @@ object SchemaConverter {
     }
   }
 
-  private def parseSchemaJson(schemaContent: String) = Json.parse(schemaContent)
+  private def parseSchemaJson(schemaContent: String) = Json.parse(schemaContent).as[JsObject]
 
-  def loadSchemaJson(filePath: String): JsValue = {
+  def loadSchemaJson(filePath: String): JsObject = {
     val relPath = getClass.getResource(filePath)
     require(relPath != null, s"Path can not be reached: $filePath")
     parseSchemaJson(Source.fromURL(relPath).mkString)
@@ -95,13 +95,13 @@ object SchemaConverter {
     jsonKeys match {
       case Nil => schema
       case head :: tail =>
-        val enrichedSchema = addJsonField(schema, (json \ head).as[JsValue])
+        val enrichedSchema = addJsonField(schema, (json \ head).as[JsObject], head)
         convertJsonStruct(enrichedSchema, json, tail)
     }
   }
 
-  private def addJsonField(schema: StructType, json: JsValue): StructType = {
-    val fieldType = getJsonType(json)
+  private def addJsonField(schema: StructType, json: JsObject, name: String): StructType = {
+    val fieldType = getJsonType(json, name)
     val (dataType, nullable) = TypeMap(fieldType.typeName) match {
 
       case dataType: DataType =>
@@ -109,14 +109,14 @@ object SchemaConverter {
 
       case ArrayType =>
         val dataType = ArrayType(getDataType(json, JsPath \ SchemaArrayContents \ SchemaStructContents))
-        (dataType, getJsonType(json).nullable)
+        (dataType, getJsonType(json, name).nullable)
 
       case StructType =>
         val dataType = getDataType(json, JsPath \ SchemaStructContents)
-        (dataType, getJsonType(json).nullable)
+        (dataType, getJsonType(json, name).nullable)
     }
 
-    schema.add(getJsonName(json), dataType, nullable = nullable)
+    schema.add(getJsonName(json).getOrElse(name), dataType, nullable = nullable)
   }
 
   private def getDataType(json: JsValue, contentPath: JsPath): DataType = {
