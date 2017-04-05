@@ -41,6 +41,12 @@ class SchemaConverterTest extends FunSuite with Matchers {
     assert(testSchema === expectedStruct)
   }
 
+  // 'id' and 'name' are optional according to http://json-schema.org/latest/json-schema-core.html
+  test("should support optional 'id' and 'name' properties") {
+    val testSchema = SchemaConverter.convert("/testJsonSchema3.json")
+    assert(testSchema === expectedStruct)
+  }
+
   test("data fields with only nulls shouldn't be removed") {
     val schema = SchemaConverter.convert("/testJsonSchema2.json")
 
@@ -57,9 +63,7 @@ class SchemaConverterTest extends FunSuite with Matchers {
       StructField("name", StringType, nullable = true)
     )))
     assert(dbNoSchema.select("name").collect()(0)(0) === "aaa")
-    intercept[AnalysisException] {
-      dbNoSchema.select("address")
-    }
+    intercept[AnalysisException] { dbNoSchema.select("address") }
     assert(dbNoSchema.select("foo").collect()(0)(0) === "bar")
 
     // with SchemaConverter
@@ -67,8 +71,6 @@ class SchemaConverterTest extends FunSuite with Matchers {
     assert(dbWithSchema.schema === schema)
     assert(dbWithSchema.select("name").collect()(0)(0) === "aaa")
     assert(dbWithSchema.select("address.zip").collect()(0)(0) === null)
-    intercept[AnalysisException] {
-      dbWithSchema.select("foo")
-    }
+    intercept[AnalysisException] { dbWithSchema.select("foo") }
   }
 }

@@ -18,12 +18,18 @@ This verifies that the input data conforms to the given schema and enables to fi
 
 Include the library under the following coordinates:
 ```scala
-libraryDependencies += "org.zalando" %% "spark-json-schema" % "0.5"
+libraryDependencies += "org.zalando" %% "spark-json-schema" % "0.5.1"
 ```
 Parse a given json-schema file by providing the path to the input file.
 This file should be relative to the resources folder:
 ```scala
 val schema = SchemaConverter.convert("schemaFile.json")
+```
+Alternatively you can use convertContent with the schema json content as a string.
+This means you can use any file loader to access your schema.json file and put the resulting
+string into this function. So this file may be stored anywhere:
+```
+val schema = SchemaConverter.convertContent(<schema json as string>)
 ```
 Use the created schema when loading json-files into Spark:
 ```scala
@@ -46,6 +52,8 @@ After these steps you can be sure that all files that were loaded for further pr
 Feel free to contact us at team-payana@zalando.de
 
 # License
+
+This software is licensed under the MIT license (see below), unless otherwise stated in the license files in higher directories (if any).
 
 The MIT License (MIT) Copyright © 2016 Zalando SE, https://tech.zalando.com
 
