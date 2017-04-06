@@ -1,7 +1,7 @@
 package org.zalando.spark.jsonschema
 
 import org.apache.spark.sql.SQLContext
-import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.{ SparkConf, SparkContext }
 
 import scala.io.Source
 
