@@ -30,6 +30,8 @@ object SchemaConverter {
   val SchemaStructContents = "properties"
   val SchemaArrayContents = "items"
   val SchemaRoot = "/"
+  val Definitions = "definitions"
+  val Reference = "$ref"
   val TypeMap = Map(
     "string" -> StringType,
     "number" -> DoubleType,
@@ -39,16 +41,22 @@ object SchemaConverter {
     "object" -> StructType,
     "array" -> ArrayType
   )
+  var definitions: JsObject = JsObject(Seq.empty)
 
   def convertContent(schemaContent: String): StructType = convert(parseSchemaJson(schemaContent))
 
   def convert(inputPath: String): StructType = convert(loadSchemaJson(inputPath))
 
   def convert(inputSchema: JsObject): StructType = {
+    definitions = (inputSchema \ Definitions).asOpt[JsObject].getOrElse(definitions)
     val name = getJsonName(inputSchema).getOrElse("/")
     val typeName = getJsonType(inputSchema, name).typeName
     if (name == SchemaRoot && typeName == "object") {
-      val properties = (inputSchema \ SchemaStructContents).as[JsObject]
+      val properties = (inputSchema \ SchemaStructContents).asOpt[JsObject].getOrElse(
+        throw new NoSuchElementException(
+          s"Root level of schema needs to have a [$SchemaStructContents]-field"
+        )
+      )
       convertJsonStruct(new StructType, properties, properties.keys.toList)
     } else {
       throw new IllegalArgumentException(
@@ -91,7 +99,8 @@ object SchemaConverter {
   }
 
   @tailrec
-  private def convertJsonStruct(schema: StructType, json: JsObject, jsonKeys: List[String]): StructType = {
+  private def convertJsonStruct(schema: StructType, json: JsObject, jsonKeys: List[String]):
+  StructType = {
     jsonKeys match {
       case Nil => schema
       case head :: tail =>
@@ -100,7 +109,38 @@ object SchemaConverter {
     }
   }
 
-  private def addJsonField(schema: StructType, json: JsObject, name: String): StructType = {
+  def traversePath(loc: List[String], path: JsPath): JsPath = {
+    loc match {
+      case head :: tail => traversePath(tail, path \ head)
+      case Nil => path
+    }
+  }
+
+  private def checkRefs(inputJson: JsObject): JsObject = {
+    val schemaRef = (inputJson \ Reference).asOpt[JsString]
+    schemaRef match {
+      case Some(loc) =>
+        val searchDefinitions = Definitions + "/"
+        val defIndex = loc.value.indexOf(searchDefinitions) match {
+          case -1 => throw new NoSuchElementException(
+            s"Field with name [$Reference] requires path with [$searchDefinitions]"
+          )
+          case i: Int => i + searchDefinitions.length
+        }
+        val pathNodes = loc.value.drop(defIndex).split("/").toList
+        traversePath(pathNodes, JsPath)
+          .asSingleJson(definitions) match {
+            case JsDefined(v) => v.as[JsObject]
+            case _: JsUndefined =>
+              throw new NoSuchElementException(s"Path [$loc] not found in $Definitions")
+          }
+      case None => inputJson
+    }
+  }
+
+  private def addJsonField(schema: StructType, inputJson: JsObject, name: String): StructType = {
+
+    val json = checkRefs(inputJson)
     val fieldType = getJsonType(json, name)
     val (dataType, nullable) = TypeMap(fieldType.typeName) match {
 
@@ -108,7 +148,9 @@ object SchemaConverter {
         (dataType, fieldType.nullable)
 
       case ArrayType =>
-        val dataType = ArrayType(getDataType(json, JsPath \ SchemaArrayContents \ SchemaStructContents))
+        val dataType = ArrayType(getDataType(
+          (json \ SchemaArrayContents).as[JsObject], JsPath \ SchemaStructContents
+        ))
         (dataType, getJsonType(json, name).nullable)
 
       case StructType =>
@@ -119,8 +161,12 @@ object SchemaConverter {
     schema.add(getJsonName(json).getOrElse(name), dataType, nullable = nullable)
   }
 
-  private def getDataType(json: JsValue, contentPath: JsPath): DataType = {
-    val content = contentPath.asSingleJson(json).as[JsObject]
+  private def getDataType(inputJson: JsObject, contentPath: JsPath): DataType = {
+    val json = checkRefs(inputJson)
+    val content = contentPath.asSingleJson(json) match {
+      case JsDefined(v) => v.as[JsObject]
+      case _: JsUndefined => JsObject(Seq.empty)
+    }
     convertJsonStruct(new StructType, content, content.keys.toList)
   }
 }
