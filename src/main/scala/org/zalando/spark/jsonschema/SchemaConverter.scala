@@ -99,8 +99,7 @@ object SchemaConverter {
   }
 
   @tailrec
-  private def convertJsonStruct(schema: StructType, json: JsObject, jsonKeys: List[String]):
-  StructType = {
+  private def convertJsonStruct(schema: StructType, json: JsObject, jsonKeys: List[String]): StructType = {
     jsonKeys match {
       case Nil => schema
       case head :: tail =>

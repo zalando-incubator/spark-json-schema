@@ -73,4 +73,41 @@ class SchemaConverterTest extends FunSuite with Matchers {
     assert(dbWithSchema.select("address.zip").collect()(0)(0) === null)
     intercept[AnalysisException] { dbWithSchema.select("foo") }
   }
+
+  test("schema should support references") {
+    val schema = SchemaConverter.convert("/testJsonSchema4.json")
+
+    val expected = StructType(Array(
+      StructField("name", StringType, nullable = false),
+      StructField("addressA", StructType(Array(
+        StructField("zip", StringType, nullable = true)
+      )), nullable = false),
+      StructField("addressB", StructType(Array(
+        StructField("zip", StringType, nullable = true)
+      )), nullable = false)
+    ))
+
+    assert(schema === expected)
+  }
+
+  test("Empty object should be possible") {
+    val schema = SchemaConverter.convertContent(
+      """
+        {
+          "$schema": "smallTestSchema",
+          "type": "object",
+          "properties": {
+            "address": {
+              "type": "object"
+            }
+          }
+        }
+      """
+    )
+    val expected = StructType(Array(
+      StructField("address", StructType(Seq.empty), nullable = false)
+    ))
+
+    assert(schema === expected)
+  }
 }
