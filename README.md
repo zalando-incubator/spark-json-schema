@@ -41,6 +41,21 @@ val filteredData = dataFrame.rdd.filter( x => Range(0, x.length).contains(!x.isN
 ```
 After these steps you can be sure that all files that were loaded for further processing comply to your schema.
 
+# JSON
+
+The root of the schema json is required to be type 'object' and to have a field 'properties'
+having the contents of the schema. Currently supported types are:
+"string", "number" (double), "float", "integer" (long), "boolean", "object" and "array"
+
+The root level may have a field called 'definitions' having additional structures. These
+structures can be referenced in the schema. This might be useful, if you have certain
+objects that are used multiple times. In order to use such a reference in the schema 
+the corresponding field name should be '$ref'. The value is the address in the
+definitions, i.e. the path following the first occurrence of 'definitions/' will be
+applied on the definitions field. So a reference will look like:
+
+    "$ref": "definitions/path/to/struct"
+
 # Contact
 
 Feel free to contact us at team-payana@zalando.de

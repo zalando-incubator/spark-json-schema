@@ -49,7 +49,7 @@ object SchemaConverter {
 
   def convert(inputSchema: JsObject): StructType = {
     definitions = (inputSchema \ Definitions).asOpt[JsObject].getOrElse(definitions)
-    val name = getJsonName(inputSchema).getOrElse("/")
+    val name = getJsonName(inputSchema).getOrElse(SchemaRoot)
     val typeName = getJsonType(inputSchema, name).typeName
     if (name == SchemaRoot && typeName == "object") {
       val properties = (inputSchema \ SchemaStructContents).asOpt[JsObject].getOrElse(
