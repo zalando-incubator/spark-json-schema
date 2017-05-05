@@ -147,8 +147,8 @@ object SchemaConverter {
         (dataType, fieldType.nullable)
 
       case ArrayType =>
-        val dataType = ArrayType(getDataType(
-          (json \ SchemaArrayContents).as[JsObject], JsPath \ SchemaStructContents
+        val dataType = ArrayType(getArrayDataType(
+          (json \ SchemaArrayContents).as[JsObject], JsPath \ SchemaFieldType
         ))
         (dataType, getJsonType(json, name).nullable)
 
@@ -160,12 +160,39 @@ object SchemaConverter {
     schema.add(getJsonName(json).getOrElse(name), dataType, nullable = nullable)
   }
 
+  private def getArrayDataType(inputJson: JsObject, contentPath: JsPath): DataType = {
+    val json = checkRefs(inputJson)
+
+    val content = contentPath.asSingleJson(json) match {
+      case JsDefined(v) => v.asOpt[String].map(opt => TypeMap.get(opt)).getOrElse(None)
+      case _: JsUndefined => None
+    }
+    content match {
+      case Some(d: DataType) => d
+      case Some(ArrayType) =>
+        val items = (JsPath \ SchemaArrayContents).asSingleJson(json) match {
+          case JsDefined(v) => v.as[JsObject]
+          case _: JsUndefined => JsObject(Seq.empty)
+        }
+        ArrayType(getArrayDataType(items.as[JsObject], JsPath \ SchemaFieldType))
+      case Some(StructType) =>
+        val properties = (JsPath \ SchemaStructContents).asSingleJson(json) match {
+          case JsDefined(v) => v.as[JsObject]
+          case _: JsUndefined => JsObject(Seq.empty)
+        }
+        convertJsonStruct(new StructType, properties, properties.keys.toList)
+      case _ => convertJsonStruct(new StructType, JsObject(Seq.empty), JsObject(Seq.empty).keys.toList)
+    }
+  }
+
   private def getDataType(inputJson: JsObject, contentPath: JsPath): DataType = {
     val json = checkRefs(inputJson)
+
     val content = contentPath.asSingleJson(json) match {
       case JsDefined(v) => v.as[JsObject]
       case _: JsUndefined => JsObject(Seq.empty)
     }
+
     convertJsonStruct(new StructType, content, content.keys.toList)
   }
 }

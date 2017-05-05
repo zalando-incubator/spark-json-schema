@@ -110,4 +110,170 @@ class SchemaConverterTest extends FunSuite with Matchers {
 
     assert(schema === expected)
   }
+
+  test("Known primitive type array should be an array of this type") {
+    val typeMap = Map(
+      "string" -> StringType,
+      "number" -> DoubleType,
+      "float" -> FloatType,
+      "integer" -> LongType,
+      "boolean" -> BooleanType
+    )
+    typeMap.foreach {
+      case p @ (key, datatype) =>
+        val schema = SchemaConverter.convertContent(
+          s"""
+          {
+            "$$schema": "smallTestSchema",
+            "type": "object",
+            "properties": {
+              "array" : {
+                "type" : "array",
+                "items": {
+                  "type": "$key"
+                }
+              }
+            }
+          }
+        """
+        )
+        val expected = StructType(Array(
+          StructField("array", ArrayType(datatype), nullable = false)
+        ))
+
+        assert(schema === expected)
+    }
+  }
+
+  test("Array of array should be an array of array") {
+
+    val schema = SchemaConverter.convertContent(
+      """
+          {
+            "$$schema": "smallTestSchema",
+            "type": "object",
+            "properties": {
+              "array" : {
+                "type" : "array",
+                "items": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        """
+    )
+    val expected = StructType(Array(
+      StructField("array", ArrayType(ArrayType(StringType)), nullable = false)
+    ))
+
+    assert(schema === expected)
+  }
+
+  test("Array of object should be an array of object") {
+
+    val schema = SchemaConverter.convertContent(
+      """
+          {
+            "$$schema": "smallTestSchema",
+            "type": "object",
+            "properties": {
+              "array" : {
+                "type" : "array",
+                "items": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        """
+    )
+    val expected = StructType(Array(
+      StructField("array", ArrayType(StructType(Seq.empty)), nullable = false)
+    ))
+
+    assert(schema === expected)
+  }
+
+  test("Array of object with properties should be an array of object with these properties") {
+
+    val schema = SchemaConverter.convertContent(
+      """
+          {
+            "$$schema": "smallTestSchema",
+            "type": "object",
+            "properties": {
+              "array" : {
+                "type" : "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name" : {
+                      "type" : "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        """
+    )
+    val expected = StructType(Array(
+      StructField("array", ArrayType(StructType(Seq(StructField("name", StringType, nullable = false )))), nullable = false)
+    ))
+
+    assert(schema === expected)
+  }
+
+  test("Array of unknown type should be an array of object") {
+
+    val schema = SchemaConverter.convertContent(
+      """
+          {
+            "$$schema": "smallTestSchema",
+            "type": "object",
+            "properties": {
+              "array" : {
+                "type" : "array",
+                "items" : {}
+              }
+            }
+          }
+        """
+    )
+    val expected = StructType(Array(
+      StructField("array", ArrayType(StructType(Seq.empty)), nullable = false)
+    ))
+
+    assert(schema === expected)
+  }
+
+  test("Array of various type should be an array of object") {
+
+    val schema = SchemaConverter.convertContent(
+      """
+          {
+            "$$schema": "smallTestSchema",
+            "type": "object",
+            "properties": {
+              "array" : {
+                "type" : "array",
+                "items" : {
+                  "type" : ["string", "integer"]
+                }
+              }
+            }
+          }
+        """
+    )
+    val expected = StructType(Array(
+      StructField("array", ArrayType(StructType(Seq.empty)), nullable = false)
+    ))
+
+    assert(schema === expected)
+  }
+
 }
