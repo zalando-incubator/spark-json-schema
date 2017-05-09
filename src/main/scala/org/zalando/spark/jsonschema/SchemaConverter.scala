@@ -42,6 +42,20 @@ object SchemaConverter {
     "array" -> ArrayType
   )
   var definitions: JsObject = JsObject(Seq.empty)
+  private var _isStrictTypingEnabled: Boolean = true
+
+  def disableStrictTyping(): SchemaConverter.type = {
+    setStrictTyping(false)
+  }
+
+  def enableStrictTyping(): SchemaConverter.type = {
+    setStrictTyping(true)
+  }
+
+  private def setStrictTyping(b: Boolean) = {
+    _isStrictTypingEnabled = b
+    this
+  }
 
   def convertContent(schemaContent: String): StructType = convert(parseSchemaJson(schemaContent))
 
@@ -75,21 +89,28 @@ object SchemaConverter {
 
     (json \ SchemaFieldType).getOrElse(JsNull) match {
       case JsString(s) => SchemaType(s, nullable = false)
-      case JsArray(array) => array.size match {
-        case 1 if array.head != JsString("null") =>
-          SchemaType(array.head.as[String], nullable = false)
-        case 2 if array.contains(JsString("null")) =>
-          array.find(_ != JsString("null"))
-            .map(i => SchemaType(i.as[String], nullable = true))
-            .getOrElse {
-              throw new IllegalArgumentException(
-                s"Incorrect definition of a nullable parameter at <$id>"
-              )
-            }
-        case _ => throw new IllegalArgumentException(
-          s"Unsupported type definition <${array.toString}> in schema at <$id>"
-        )
-      }
+      case JsArray(array) =>
+        val nullable = array.contains(JsString("null"))
+        array.size match {
+          case 1 if nullable =>
+            throw new IllegalArgumentException(s"Null type only is not supported")
+          case 1 =>
+            SchemaType(array.head.as[String], nullable = nullable)
+          case 2 if nullable =>
+            array.find(_ != JsString("null"))
+              .map(i => SchemaType(i.as[String], nullable = nullable))
+              .getOrElse {
+                throw new IllegalArgumentException(
+                  s"Incorrect definition of a nullable parameter at <$id>"
+                )
+              }
+          case _ if _isStrictTypingEnabled =>
+            throw new IllegalArgumentException(
+              s"Unsupported type definition <${array.toString}> in schema at <$id>"
+            )
+          case _ => // Default to string as it is the "safest" type
+            SchemaType("string", nullable = nullable)
+        }
       case JsNull => throw new IllegalArgumentException(s"No <$SchemaType> in schema at <$id>")
       case t => throw new IllegalArgumentException(
         s"Unsupported type <${t.toString}> in schema at <$id>"

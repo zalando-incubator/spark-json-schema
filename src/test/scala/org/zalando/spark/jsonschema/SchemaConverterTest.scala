@@ -2,10 +2,10 @@ package org.zalando.spark.jsonschema
 
 import org.apache.spark.sql.AnalysisException
 import org.apache.spark.sql.types._
-import org.scalatest.{FunSuite, Matchers}
+import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 import org.zalando.spark.jsonschema.SparkTestEnv._
 
-class SchemaConverterTest extends FunSuite with Matchers {
+class SchemaConverterTest extends FunSuite with Matchers with BeforeAndAfter {
 
   val expectedStruct = StructType(Array(
     StructField("object", StructType(Array(
@@ -30,6 +30,10 @@ class SchemaConverterTest extends FunSuite with Matchers {
     StructField("boolean", BooleanType, nullable = false),
     StructField("additionalProperty", StringType, nullable = false)
   ))
+
+  before {
+    SchemaConverter.enableStrictTyping()
+  }
 
   test("should convert schema.json into spark StructType") {
     val testSchema = SchemaConverter.convert("/testJsonSchema.json")
@@ -379,6 +383,79 @@ class SchemaConverterTest extends FunSuite with Matchers {
     )
 
     assert(schema === expected)
+  }
+
+  test("Multiple types should fail with strict typing") {
+    assertThrows[IllegalArgumentException] {
+      val schema = SchemaConverter.convertContent(
+        """
+          {
+            "$$schema": "smallTestSchema",
+            "type": "object",
+            "properties": {
+              "prop" : {
+                "type" : ["integer", "float"]
+              }
+            }
+          }
+        """)
+
+    }
+  }
+
+  test("Multiple types should default to string without strict typing") {
+    val schema = SchemaConverter.disableStrictTyping().convertContent(
+      """
+          {
+            "$$schema": "smallTestSchema",
+            "type": "object",
+            "properties": {
+              "prop" : {
+                "type" : ["integer", "float"]
+              }
+            }
+          }
+        """)
+
+    val expected = StructType(Array(
+      StructField("prop", StringType, nullable = false))
+    )
+
+    assert(schema === expected)
+  }
+
+  test("null type only should fail") {
+    assertThrows[NoSuchElementException] {
+    val schema = SchemaConverter.convertContent(
+      """
+          {
+            "$$schema": "smallTestSchema",
+            "type": "object",
+            "properties": {
+              "prop" : {
+                "type" : "null"
+              }
+            }
+          }
+        """)
+    }
+  }
+
+  test("null type only should fail event as a single array element") {
+    assertThrows[IllegalArgumentException] {
+      val schema = SchemaConverter.convertContent(
+        """
+          {
+            "$$schema": "smallTestSchema",
+            "type": "object",
+            "properties": {
+              "prop" : {
+                "type" : ["null"]
+              }
+            }
+          }
+        """)
+    }
   }
 
 }
