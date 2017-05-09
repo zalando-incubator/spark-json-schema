@@ -75,14 +75,21 @@ object SchemaConverter {
 
     (json \ SchemaFieldType).getOrElse(JsNull) match {
       case JsString(s) => SchemaType(s, nullable = false)
-      case JsArray(array) if array.size == 2 =>
-        array.find(_ != JsString("null"))
-          .map(i => SchemaType(i.as[String], nullable = true))
-          .getOrElse {
-            throw new IllegalArgumentException(
-              s"Incorrect definition of a nullable parameter at <$id>"
-            )
-          }
+      case JsArray(array) => array.size match {
+        case 1 if array.head != JsString("null") =>
+          SchemaType(array.head.as[String], nullable = false)
+        case 2 if array.contains(JsString("null")) =>
+          array.find(_ != JsString("null"))
+            .map(i => SchemaType(i.as[String], nullable = true))
+            .getOrElse {
+              throw new IllegalArgumentException(
+                s"Incorrect definition of a nullable parameter at <$id>"
+              )
+            }
+        case _ => throw new IllegalArgumentException(
+          s"Unsupported type definition <${array.toString}> in schema at <$id>"
+        )
+      }
       case JsNull => throw new IllegalArgumentException(s"No <$SchemaType> in schema at <$id>")
       case t => throw new IllegalArgumentException(
         s"Unsupported type <${t.toString}> in schema at <$id>"
@@ -140,48 +147,27 @@ object SchemaConverter {
   private def addJsonField(schema: StructType, inputJson: JsObject, name: String): StructType = {
 
     val json = checkRefs(inputJson)
+    val (dataType, nullable) = getFieldType(json, name)
+
+    schema.add(getJsonName(json).getOrElse(name), dataType, nullable = nullable)
+  }
+
+  private def getFieldType(json: JsObject, name: String): (DataType, Boolean) = {
     val fieldType = getJsonType(json, name)
-    val (dataType, nullable) = TypeMap(fieldType.typeName) match {
+    TypeMap(fieldType.typeName) match {
 
       case dataType: DataType =>
         (dataType, fieldType.nullable)
 
       case ArrayType =>
-        val dataType = ArrayType(getArrayDataType(
-          (json \ SchemaArrayContents).as[JsObject], JsPath \ SchemaFieldType
-        ))
+        val innerJson = checkRefs((json \ SchemaArrayContents).as[JsObject])
+        val innerJsonType = getFieldType(innerJson, "")
+        val dataType = ArrayType(innerJsonType._1, innerJsonType._2)
         (dataType, getJsonType(json, name).nullable)
 
       case StructType =>
         val dataType = getDataType(json, JsPath \ SchemaStructContents)
         (dataType, getJsonType(json, name).nullable)
-    }
-
-    schema.add(getJsonName(json).getOrElse(name), dataType, nullable = nullable)
-  }
-
-  private def getArrayDataType(inputJson: JsObject, contentPath: JsPath): DataType = {
-    val json = checkRefs(inputJson)
-
-    val content = contentPath.asSingleJson(json) match {
-      case JsDefined(v) => v.asOpt[String].map(opt => TypeMap.get(opt)).getOrElse(None)
-      case _: JsUndefined => None
-    }
-    content match {
-      case Some(d: DataType) => d
-      case Some(ArrayType) =>
-        val items = (JsPath \ SchemaArrayContents).asSingleJson(json) match {
-          case JsDefined(v) => v.as[JsObject]
-          case _: JsUndefined => JsObject(Seq.empty)
-        }
-        ArrayType(getArrayDataType(items.as[JsObject], JsPath \ SchemaFieldType))
-      case Some(StructType) =>
-        val properties = (JsPath \ SchemaStructContents).asSingleJson(json) match {
-          case JsDefined(v) => v.as[JsObject]
-          case _: JsUndefined => JsObject(Seq.empty)
-        }
-        convertJsonStruct(new StructType, properties, properties.keys.toList)
-      case _ => convertJsonStruct(new StructType, JsObject(Seq.empty), JsObject(Seq.empty).keys.toList)
     }
   }
 

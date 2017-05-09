@@ -2,7 +2,7 @@ package org.zalando.spark.jsonschema
 
 import org.apache.spark.sql.AnalysisException
 import org.apache.spark.sql.types._
-import org.scalatest.{ FunSuite, Matchers }
+import org.scalatest.{FunSuite, Matchers}
 import org.zalando.spark.jsonschema.SparkTestEnv._
 
 class SchemaConverterTest extends FunSuite with Matchers {
@@ -15,12 +15,12 @@ class SchemaConverterTest extends FunSuite with Matchers {
     StructField("array", ArrayType(StructType(Array(
       StructField("itemProperty1", StringType, nullable = false),
       StructField("itemProperty2", DoubleType, nullable = false)
-    ))), nullable = false),
+    )), containsNull = false), nullable = false),
     StructField("structure", StructType(Array(
       StructField("nestedArray", ArrayType(StructType(Array(
         StructField("key", StringType, nullable = false),
         StructField("value", LongType, nullable = false)
-      ))), nullable = false)
+      )), containsNull = false), nullable = false)
     )), nullable = false),
     StructField("integer", LongType, nullable = false),
     StructField("string", StringType, nullable = false),
@@ -138,7 +138,7 @@ class SchemaConverterTest extends FunSuite with Matchers {
         """
         )
         val expected = StructType(Array(
-          StructField("array", ArrayType(datatype), nullable = false)
+          StructField("array", ArrayType(datatype, containsNull = false), nullable = false)
         ))
 
         assert(schema === expected)
@@ -167,7 +167,7 @@ class SchemaConverterTest extends FunSuite with Matchers {
         """
     )
     val expected = StructType(Array(
-      StructField("array", ArrayType(ArrayType(StringType)), nullable = false)
+      StructField("array", ArrayType(ArrayType(StringType, containsNull = false), containsNull = false), nullable = false)
     ))
 
     assert(schema === expected)
@@ -192,7 +192,7 @@ class SchemaConverterTest extends FunSuite with Matchers {
         """
     )
     val expected = StructType(Array(
-      StructField("array", ArrayType(StructType(Seq.empty)), nullable = false)
+      StructField("array", ArrayType(StructType(Seq.empty), containsNull = false), nullable = false)
     ))
 
     assert(schema === expected)
@@ -222,16 +222,18 @@ class SchemaConverterTest extends FunSuite with Matchers {
         """
     )
     val expected = StructType(Array(
-      StructField("array", ArrayType(StructType(Seq(StructField("name", StringType, nullable = false )))), nullable = false)
+      StructField("array", ArrayType(StructType(Seq(StructField("name", StringType, nullable = false))), containsNull = false), nullable = false)
     ))
 
     assert(schema === expected)
   }
 
-  test("Array of unknown type should be an array of object") {
 
-    val schema = SchemaConverter.convertContent(
-      """
+  test("Array of unknown type should fail") {
+
+    assertThrows[IllegalArgumentException] {
+      val schema = SchemaConverter.convertContent(
+        """
           {
             "$$schema": "smallTestSchema",
             "type": "object",
@@ -243,18 +245,14 @@ class SchemaConverterTest extends FunSuite with Matchers {
             }
           }
         """
-    )
-    val expected = StructType(Array(
-      StructField("array", ArrayType(StructType(Seq.empty)), nullable = false)
-    ))
-
-    assert(schema === expected)
+      )
+    }
   }
 
-  test("Array of various type should be an array of object") {
-
-    val schema = SchemaConverter.convertContent(
-      """
+  test("Array of various type should fail") {
+    assertThrows[IllegalArgumentException] {
+      val schema = SchemaConverter.convertContent(
+        """
           {
             "$$schema": "smallTestSchema",
             "type": "object",
@@ -267,11 +265,118 @@ class SchemaConverterTest extends FunSuite with Matchers {
               }
             }
           }
-        """
+        """)
+    }
+  }
+
+  test("Array of nullable type should be an array of nullable type") {
+    val typeMap = Map(
+      "string" -> StringType,
+      "number" -> DoubleType,
+      "float" -> FloatType,
+      "integer" -> LongType,
+      "boolean" -> BooleanType
     )
+    typeMap.foreach(entry => {
+      val schema = SchemaConverter.convertContent(
+        s"""
+          {
+            "$$schema": "smallTestSchema",
+            "type": "object",
+            "properties": {
+              "array" : {
+                "type" : "array",
+                "items" : {
+                  "type" : ["${entry._1}", "null"]
+                }
+              }
+            }
+          }
+        """)
+
     val expected = StructType(Array(
-      StructField("array", ArrayType(StructType(Seq.empty)), nullable = false)
+      StructField("array", ArrayType(entry._2, containsNull = true), nullable = false)
     ))
+
+    assert(schema === expected)
+    }
+    )
+  }
+
+  test("Array of non-nullable type should be an array of non-nullable type") {
+    val schema = SchemaConverter.convertContent(
+      """
+          {
+            "$$schema": "smallTestSchema",
+            "type": "object",
+            "properties": {
+              "array" : {
+                "type" : "array",
+                "items" : {
+                  "type" : ["string"]
+                }
+              }
+            }
+          }
+        """)
+
+    val expected = StructType(Array(
+      StructField("array", ArrayType(StringType, containsNull = false), nullable = false)
+    ))
+
+    assert(schema === expected)
+  }
+
+  test("Array of nullable object should be an array of nullable object") {
+    val schema = SchemaConverter.convertContent(
+      """
+          {
+            "$$schema": "smallTestSchema",
+            "type": "object",
+            "properties": {
+              "array" : {
+                "type" : "array",
+                "items" : {
+                  "type" : ["object", "null"],
+                  "properties" : {
+                    "prop" : {
+                      "type" : "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        """)
+
+    val expected = StructType(Array(
+      StructField("array", ArrayType(
+        StructType(Seq(StructField("prop", StringType, nullable = false))), containsNull = true), nullable = false)
+    ))
+
+    assert(schema === expected)
+  }
+
+  test("Nullable array should be an array or a null value") {
+    val schema = SchemaConverter.convertContent(
+      """
+          {
+            "$$schema": "smallTestSchema",
+            "type": "object",
+            "properties": {
+              "array" : {
+                "type" : ["array", "null"],
+                "items" : {
+                  "type" : "string"
+                }
+              }
+            }
+          }
+        """)
+
+    val expected = StructType(Array(
+      StructField("array", ArrayType(StringType, containsNull = false), nullable = true))
+    )
 
     assert(schema === expected)
   }
