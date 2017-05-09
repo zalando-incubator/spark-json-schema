@@ -93,9 +93,9 @@ object SchemaConverter {
         val nullable = array.contains(JsString("null"))
         array.size match {
           case 1 if nullable =>
-            throw new IllegalArgumentException(s"Null type only is not supported")
+            throw new IllegalArgumentException("Null type only is not supported")
           case 1 =>
-            SchemaType(array.head.as[String], nullable = nullable)
+            SchemaType(array.apply(0).as[String], nullable = nullable)
           case 2 if nullable =>
             array.find(_ != JsString("null"))
               .map(i => SchemaType(i.as[String], nullable = nullable))
