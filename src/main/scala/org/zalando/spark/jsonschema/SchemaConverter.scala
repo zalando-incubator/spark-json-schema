@@ -42,6 +42,20 @@ object SchemaConverter {
     "array" -> ArrayType
   )
   var definitions: JsObject = JsObject(Seq.empty)
+  private var _isStrictTypingEnabled: Boolean = true
+
+  def disableStrictTyping(): SchemaConverter.type = {
+    setStrictTyping(false)
+  }
+
+  def enableStrictTyping(): SchemaConverter.type = {
+    setStrictTyping(true)
+  }
+
+  private def setStrictTyping(b: Boolean) = {
+    _isStrictTypingEnabled = b
+    this
+  }
 
   def convertContent(schemaContent: String): StructType = convert(parseSchemaJson(schemaContent))
 
@@ -75,14 +89,28 @@ object SchemaConverter {
 
     (json \ SchemaFieldType).getOrElse(JsNull) match {
       case JsString(s) => SchemaType(s, nullable = false)
-      case JsArray(array) if array.size == 2 =>
-        array.find(_ != JsString("null"))
-          .map(i => SchemaType(i.as[String], nullable = true))
-          .getOrElse {
+      case JsArray(array) =>
+        val nullable = array.contains(JsString("null"))
+        array.size match {
+          case 1 if nullable =>
+            throw new IllegalArgumentException("Null type only is not supported")
+          case 1 =>
+            SchemaType(array.apply(0).as[String], nullable = nullable)
+          case 2 if nullable =>
+            array.find(_ != JsString("null"))
+              .map(i => SchemaType(i.as[String], nullable = nullable))
+              .getOrElse {
+                throw new IllegalArgumentException(
+                  s"Incorrect definition of a nullable parameter at <$id>"
+                )
+              }
+          case _ if _isStrictTypingEnabled =>
             throw new IllegalArgumentException(
-              s"Incorrect definition of a nullable parameter at <$id>"
+              s"Unsupported type definition <${array.toString}> in schema at <$id>"
             )
-          }
+          case _ => // Default to string as it is the "safest" type
+            SchemaType("string", nullable = nullable)
+        }
       case JsNull => throw new IllegalArgumentException(s"No <$SchemaType> in schema at <$id>")
       case t => throw new IllegalArgumentException(
         s"Unsupported type <${t.toString}> in schema at <$id>"
@@ -140,32 +168,38 @@ object SchemaConverter {
   private def addJsonField(schema: StructType, inputJson: JsObject, name: String): StructType = {
 
     val json = checkRefs(inputJson)
+    val (dataType, nullable) = getFieldType(json, name)
+
+    schema.add(getJsonName(json).getOrElse(name), dataType, nullable = nullable)
+  }
+
+  private def getFieldType(json: JsObject, name: String): (DataType, Boolean) = {
     val fieldType = getJsonType(json, name)
-    val (dataType, nullable) = TypeMap(fieldType.typeName) match {
+    TypeMap(fieldType.typeName) match {
 
       case dataType: DataType =>
         (dataType, fieldType.nullable)
 
       case ArrayType =>
-        val dataType = ArrayType(getDataType(
-          (json \ SchemaArrayContents).as[JsObject], JsPath \ SchemaStructContents
-        ))
+        val innerJson = checkRefs((json \ SchemaArrayContents).as[JsObject])
+        val innerJsonType = getFieldType(innerJson, "")
+        val dataType = ArrayType(innerJsonType._1, innerJsonType._2)
         (dataType, getJsonType(json, name).nullable)
 
       case StructType =>
         val dataType = getDataType(json, JsPath \ SchemaStructContents)
         (dataType, getJsonType(json, name).nullable)
     }
-
-    schema.add(getJsonName(json).getOrElse(name), dataType, nullable = nullable)
   }
 
   private def getDataType(inputJson: JsObject, contentPath: JsPath): DataType = {
     val json = checkRefs(inputJson)
+
     val content = contentPath.asSingleJson(json) match {
       case JsDefined(v) => v.as[JsObject]
       case _: JsUndefined => JsObject(Seq.empty)
     }
+
     convertJsonStruct(new StructType, content, content.keys.toList)
   }
 }
