@@ -2,7 +2,7 @@ package org.zalando.spark.jsonschema
 
 import org.apache.spark.sql.AnalysisException
 import org.apache.spark.sql.types._
-import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
+import org.scalatest.{ BeforeAndAfter, FunSuite, Matchers }
 import org.zalando.spark.jsonschema.SparkTestEnv._
 
 class SchemaConverterTest extends FunSuite with Matchers with BeforeAndAfter {
@@ -232,7 +232,6 @@ class SchemaConverterTest extends FunSuite with Matchers with BeforeAndAfter {
     assert(schema === expected)
   }
 
-
   test("Array of unknown type should fail") {
 
     assertThrows[IllegalArgumentException] {
@@ -269,7 +268,8 @@ class SchemaConverterTest extends FunSuite with Matchers with BeforeAndAfter {
               }
             }
           }
-        """)
+        """
+      )
     }
   }
 
@@ -296,15 +296,15 @@ class SchemaConverterTest extends FunSuite with Matchers with BeforeAndAfter {
               }
             }
           }
-        """)
+        """
+      )
 
-    val expected = StructType(Array(
-      StructField("array", ArrayType(entry._2, containsNull = true), nullable = false)
-    ))
+      val expected = StructType(Array(
+        StructField("array", ArrayType(entry._2, containsNull = true), nullable = false)
+      ))
 
-    assert(schema === expected)
-    }
-    )
+      assert(schema === expected)
+    })
   }
 
   test("Array of non-nullable type should be an array of non-nullable type") {
@@ -322,7 +322,8 @@ class SchemaConverterTest extends FunSuite with Matchers with BeforeAndAfter {
               }
             }
           }
-        """)
+        """
+    )
 
     val expected = StructType(Array(
       StructField("array", ArrayType(StringType, containsNull = false), nullable = false)
@@ -351,11 +352,13 @@ class SchemaConverterTest extends FunSuite with Matchers with BeforeAndAfter {
               }
             }
           }
-        """)
+        """
+    )
 
     val expected = StructType(Array(
       StructField("array", ArrayType(
-        StructType(Seq(StructField("prop", StringType, nullable = false))), containsNull = true), nullable = false)
+        StructType(Seq(StructField("prop", StringType, nullable = false))), containsNull = true
+      ), nullable = false)
     ))
 
     assert(schema === expected)
@@ -376,11 +379,12 @@ class SchemaConverterTest extends FunSuite with Matchers with BeforeAndAfter {
               }
             }
           }
-        """)
+        """
+    )
 
     val expected = StructType(Array(
-      StructField("array", ArrayType(StringType, containsNull = false), nullable = true))
-    )
+      StructField("array", ArrayType(StringType, containsNull = false), nullable = true)
+    ))
 
     assert(schema === expected)
   }
@@ -398,7 +402,8 @@ class SchemaConverterTest extends FunSuite with Matchers with BeforeAndAfter {
               }
             }
           }
-        """)
+        """
+      )
 
     }
   }
@@ -415,19 +420,20 @@ class SchemaConverterTest extends FunSuite with Matchers with BeforeAndAfter {
               }
             }
           }
-        """)
+        """
+    )
 
     val expected = StructType(Array(
-      StructField("prop", StringType, nullable = false))
-    )
+      StructField("prop", StringType, nullable = false)
+    ))
 
     assert(schema === expected)
   }
 
   test("null type only should fail") {
     assertThrows[NoSuchElementException] {
-    val schema = SchemaConverter.convertContent(
-      """
+      val schema = SchemaConverter.convertContent(
+        """
           {
             "$$schema": "smallTestSchema",
             "type": "object",
@@ -437,7 +443,8 @@ class SchemaConverterTest extends FunSuite with Matchers with BeforeAndAfter {
               }
             }
           }
-        """)
+        """
+      )
     }
   }
 
@@ -454,7 +461,8 @@ class SchemaConverterTest extends FunSuite with Matchers with BeforeAndAfter {
               }
             }
           }
-        """)
+        """
+      )
     }
   }
 
