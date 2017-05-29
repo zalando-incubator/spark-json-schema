@@ -18,7 +18,7 @@ This verifies that the input data conforms to the given schema and enables to fi
 
 Include the library under the following coordinates:
 ```scala
-libraryDependencies += "org.zalando" %% "spark-json-schema" % "0.6"
+libraryDependencies += "org.zalando" %% "spark-json-schema" % "0.6.1"
 ```
 Parse a given json-schema file by providing the path to the input file.
 This file should be relative to the resources folder:
