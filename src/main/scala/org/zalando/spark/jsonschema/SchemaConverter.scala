@@ -21,6 +21,7 @@ import scala.io.Source
  *
  */
 case class SchemaType(typeName: String, nullable: Boolean)
+private case class NullableDataType(dataType: DataType, nullable: Boolean)
 
 object SchemaConverter {
 
@@ -168,27 +169,27 @@ object SchemaConverter {
   private def addJsonField(schema: StructType, inputJson: JsObject, name: String): StructType = {
 
     val json = checkRefs(inputJson)
-    val (dataType, nullable) = getFieldType(json, name)
+    val fieldType = getFieldType(json, name)
 
-    schema.add(getJsonName(json).getOrElse(name), dataType, nullable = nullable)
+    schema.add(getJsonName(json).getOrElse(name), fieldType.dataType, nullable = fieldType.nullable)
   }
 
-  private def getFieldType(json: JsObject, name: String): (DataType, Boolean) = {
+  private def getFieldType(json: JsObject, name: String): NullableDataType = {
     val fieldType = getJsonType(json, name)
     TypeMap(fieldType.typeName) match {
 
       case dataType: DataType =>
-        (dataType, fieldType.nullable)
+        NullableDataType(dataType, fieldType.nullable)
 
       case ArrayType =>
         val innerJson = checkRefs((json \ SchemaArrayContents).as[JsObject])
         val innerJsonType = getFieldType(innerJson, "")
-        val dataType = ArrayType(innerJsonType._1, innerJsonType._2)
-        (dataType, getJsonType(json, name).nullable)
+        val dataType = ArrayType(innerJsonType.dataType, innerJsonType.nullable)
+        NullableDataType(dataType, fieldType.nullable)
 
       case StructType =>
         val dataType = getDataType(json, JsPath \ SchemaStructContents)
-        (dataType, getJsonType(json, name).nullable)
+        NullableDataType(dataType, fieldType.nullable)
     }
   }
 
