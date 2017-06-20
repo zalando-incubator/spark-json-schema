@@ -18,9 +18,10 @@ object SparkTestEnv {
   }
 
   def getTestResourceContent(relativePath: String): String = {
-    val relPath = getClass.getResource(relativePath)
-    require(relPath != null, s"Path can not be reached: $relativePath")
-    Source.fromURL(relPath).mkString
+    Option(getClass.getResource(relativePath)) match {
+      case Some(relPath) => Source.fromURL (relPath).mkString
+      case None => throw new IllegalArgumentException(s"Path can not be reached: $relativePath")
+    }
   }
 
 }

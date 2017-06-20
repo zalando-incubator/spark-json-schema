@@ -122,9 +122,10 @@ object SchemaConverter {
   private def parseSchemaJson(schemaContent: String) = Json.parse(schemaContent).as[JsObject]
 
   def loadSchemaJson(filePath: String): JsObject = {
-    val relPath = getClass.getResource(filePath)
-    require(relPath != null, s"Path can not be reached: $filePath")
-    parseSchemaJson(Source.fromURL(relPath).mkString)
+    Option(getClass.getResource(filePath)) match {
+      case Some(relPath) => parseSchemaJson(Source.fromURL(relPath).mkString)
+      case None => throw new IllegalArgumentException(s"Path can not be reached: $filePath")
+    }
   }
 
   @tailrec
