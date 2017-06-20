@@ -1,6 +1,7 @@
 [![Build Status](https://travis-ci.org/zalando-incubator/spark-json-schema.svg?branch=master)](https://travis-ci.org/zalando-incubator/spark-json-schema)
 [![codecov.io](http://codecov.io/github/zalando-incubator/spark-json-schema/coverage.svg?branch=master)](http://codecov.io/github/zalando-incubator/spark-json-schema?branch=master)
 [![MIT licensed](https://img.shields.io/badge/license-MIT-green.svg)](https://raw.githubusercontent.com/zalando-incubator/spark-json-schema/master/LICENSE)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/12381b6f4fc34242b2f50178e2ce6eca)](https://www.codacy.com/app/petz2000/spark-json-schema?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=zalando-incubator/spark-json-schema&amp;utm_campaign=Badge_Grade)
 
 # spark-json-schema
 
