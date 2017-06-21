@@ -43,7 +43,7 @@ object SchemaConverter {
     "array" -> ArrayType
   )
   var definitions: JsObject = JsObject(Seq.empty)
-  private var _isStrictTypingEnabled: Boolean = true
+  private var isStrictTypingEnabled: Boolean = true
 
   def disableStrictTyping(): SchemaConverter.type = {
     setStrictTyping(false)
@@ -54,7 +54,7 @@ object SchemaConverter {
   }
 
   private def setStrictTyping(b: Boolean) = {
-    _isStrictTypingEnabled = b
+    isStrictTypingEnabled = b
     this
   }
 
@@ -105,7 +105,7 @@ object SchemaConverter {
                   s"Incorrect definition of a nullable parameter at <$id>"
                 )
               }
-          case _ if _isStrictTypingEnabled =>
+          case _ if isStrictTypingEnabled =>
             throw new IllegalArgumentException(
               s"Unsupported type definition <${array.toString}> in schema at <$id>"
             )

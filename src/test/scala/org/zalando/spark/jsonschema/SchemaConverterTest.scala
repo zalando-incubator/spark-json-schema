@@ -284,7 +284,7 @@ class SchemaConverterTest extends FunSuite with Matchers with BeforeAndAfter {
       "integer" -> LongType,
       "boolean" -> BooleanType
     )
-    typeMap.foreach(entry => {
+    typeMap.foreach { case (name, atype) =>
       val schema = SchemaConverter.convertContent(
         s"""
           {
@@ -294,7 +294,7 @@ class SchemaConverterTest extends FunSuite with Matchers with BeforeAndAfter {
               "array" : {
                 "type" : "array",
                 "items" : {
-                  "type" : ["${entry._1}", "null"]
+                  "type" : ["$name", "null"]
                 }
               }
             }
@@ -303,11 +303,11 @@ class SchemaConverterTest extends FunSuite with Matchers with BeforeAndAfter {
       )
 
       val expected = StructType(Array(
-        StructField("array", ArrayType(entry._2, containsNull = true), nullable = false)
+        StructField("array", ArrayType(atype, containsNull = true), nullable = false)
       ))
 
       assert(schema === expected)
-    })
+    }
   }
 
   test("Array of non-nullable type should be an array of non-nullable type") {
