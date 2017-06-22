@@ -5,6 +5,8 @@ import org.apache.spark.sql.types._
 import org.scalatest.{ BeforeAndAfter, FunSuite, Matchers }
 import org.zalando.spark.jsonschema.SparkTestEnv._
 
+import scala.util.Try
+
 class SchemaConverterTest extends FunSuite with Matchers with BeforeAndAfter {
 
   val expectedStruct = StructType(Array(
@@ -74,7 +76,8 @@ class SchemaConverterTest extends FunSuite with Matchers with BeforeAndAfter {
     val dbWithSchema = sparkSession.read.schema(schema).json(jsonString)
     assert(dbWithSchema.schema === schema)
     assert(dbWithSchema.select("name").collect()(0)(0) === "aaa")
-    assert(dbWithSchema.select("address.zip").collect()(0)(0) === null)
+    assert(Try(dbWithSchema.select("address.zip").collect()(0)(0)).isSuccess)
+    assert(Try(dbWithSchema.select("address.foo").collect()(0)(0)).isFailure)
     intercept[AnalysisException] { dbWithSchema.select("foo") }
   }
 
@@ -281,7 +284,7 @@ class SchemaConverterTest extends FunSuite with Matchers with BeforeAndAfter {
       "integer" -> LongType,
       "boolean" -> BooleanType
     )
-    typeMap.foreach(entry => {
+    typeMap.foreach { case (name, atype) =>
       val schema = SchemaConverter.convertContent(
         s"""
           {
@@ -291,7 +294,7 @@ class SchemaConverterTest extends FunSuite with Matchers with BeforeAndAfter {
               "array" : {
                 "type" : "array",
                 "items" : {
-                  "type" : ["${entry._1}", "null"]
+                  "type" : ["$name", "null"]
                 }
               }
             }
@@ -300,11 +303,11 @@ class SchemaConverterTest extends FunSuite with Matchers with BeforeAndAfter {
       )
 
       val expected = StructType(Array(
-        StructField("array", ArrayType(entry._2, containsNull = true), nullable = false)
+        StructField("array", ArrayType(atype, containsNull = true), nullable = false)
       ))
 
       assert(schema === expected)
-    })
+    }
   }
 
   test("Array of non-nullable type should be an array of non-nullable type") {

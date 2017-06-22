@@ -43,7 +43,7 @@ object SchemaConverter {
     "array" -> ArrayType
   )
   var definitions: JsObject = JsObject(Seq.empty)
-  private var _isStrictTypingEnabled: Boolean = true
+  private var isStrictTypingEnabled: Boolean = true
 
   def disableStrictTyping(): SchemaConverter.type = {
     setStrictTyping(false)
@@ -54,7 +54,7 @@ object SchemaConverter {
   }
 
   private def setStrictTyping(b: Boolean) = {
-    _isStrictTypingEnabled = b
+    isStrictTypingEnabled = b
     this
   }
 
@@ -105,7 +105,7 @@ object SchemaConverter {
                   s"Incorrect definition of a nullable parameter at <$id>"
                 )
               }
-          case _ if _isStrictTypingEnabled =>
+          case _ if isStrictTypingEnabled =>
             throw new IllegalArgumentException(
               s"Unsupported type definition <${array.toString}> in schema at <$id>"
             )
@@ -122,9 +122,10 @@ object SchemaConverter {
   private def parseSchemaJson(schemaContent: String) = Json.parse(schemaContent).as[JsObject]
 
   def loadSchemaJson(filePath: String): JsObject = {
-    val relPath = getClass.getResource(filePath)
-    require(relPath != null, s"Path can not be reached: $filePath")
-    parseSchemaJson(Source.fromURL(relPath).mkString)
+    Option(getClass.getResource(filePath)) match {
+      case Some(relPath) => parseSchemaJson(Source.fromURL(relPath).mkString)
+      case None => throw new IllegalArgumentException(s"Path can not be reached: $filePath")
+    }
   }
 
   @tailrec
