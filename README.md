@@ -59,7 +59,7 @@ applied on the definitions field. So a reference will look like:
 
 # Contact
 
-Feel free to contact us at team-payana@zalando.de or to create a pull request. We welcome community contributions. Please read CONTRIBUTING.md for more information.
+Feel free to contact us at team-payana@zalando.de or to create a pull request. We welcome community contributions. Please read [CONTRIBUTING](CONTRIBUTING.md) for more information.
 
 # License
 
