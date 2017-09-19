@@ -112,7 +112,8 @@ object SchemaConverter {
           case _ => // Default to string as it is the "safest" type
             SchemaType("string", nullable = nullable)
         }
-      case JsNull => throw new IllegalArgumentException(s"No <$SchemaType> in schema at <$id>")
+      case JsNull =>
+        throw new IllegalArgumentException(s"No <$SchemaFieldType>-field in schema at <$id>")
       case t => throw new IllegalArgumentException(
         s"Unsupported type <${t.toString}> in schema at <$id>"
       )
