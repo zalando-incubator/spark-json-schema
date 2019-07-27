@@ -469,4 +469,57 @@ class SchemaConverterTest extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
+  test("Reference of multiple types should fail with strict typing") {
+    assertThrows[IllegalArgumentException] {
+      val schema = SchemaConverter.enableStrictTyping().convertContent(
+        """
+          {
+            "definitions": {
+              "address": {
+                "type": ["object", "array"],
+                "properties": {
+                  "street_address": { "type": "string" },
+                  "city":           { "type": "string" },
+                  "state":          { "type": "string" }
+                }
+              }
+            },
+            "type": "object",
+            "properties": {
+              "billing_address": { "$ref": "#/definitions/address" }
+            }
+          }
+        """
+      )
+    }
+  }
+
+  test("Reference of multiple types should default to typing when disable strict typing") {
+    val schema = SchemaConverter.disableStrictTyping().convertContent(
+      """
+          {
+            "definitions": {
+              "address": {
+                "type": ["object", "array"],
+                "properties": {
+                  "street_address": { "type": "string" },
+                  "city":           { "type": "string" },
+                  "state":          { "type": "string" }
+                }
+              }
+            },
+            "type": "object",
+            "properties": {
+              "billing_address": { "$ref": "#/definitions/address" }
+            }
+          }
+        """
+    )
+
+    val expected = StructType(
+      Seq(StructField("billing_address", StringType, nullable = false))
+    )
+
+    assert(schema === expected)
+  }
 }

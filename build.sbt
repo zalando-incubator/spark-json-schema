@@ -5,7 +5,7 @@ organization := "org.zalando"
 
 scalaVersion := "2.11.8"
 
-libraryDependencies += "org.apache.spark" %% "spark-sql" % "2.0.1"  % Provided
+libraryDependencies += "org.apache.spark" %% "spark-sql" % "2.4.3"  % Provided
 libraryDependencies += "com.typesafe.play" %% "play-json" % "2.5.10"
 dependencyOverrides ++= Set("com.fasterxml.jackson.core" % "jackson-databind" % "2.6.5")
 
