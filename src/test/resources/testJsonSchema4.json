@@ -1,6 +1,7 @@
 {
   "$schema": "smallTestSchema",
   "type": "object",
+  "required": ["name", "addressA"],
   "properties": {
     "name": {
       "type": "string"
