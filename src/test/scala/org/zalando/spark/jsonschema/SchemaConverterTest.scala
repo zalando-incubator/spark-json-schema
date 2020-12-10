@@ -284,9 +284,10 @@ class SchemaConverterTest extends FunSuite with Matchers with BeforeAndAfter {
       "integer" -> LongType,
       "boolean" -> BooleanType
     )
-    typeMap.foreach { case (name, atype) =>
-      val schema = SchemaConverter.convertContent(
-        s"""
+    typeMap.foreach {
+      case (name, atype) =>
+        val schema = SchemaConverter.convertContent(
+          s"""
           {
             "$$schema": "smallTestSchema",
             "type": "object",
@@ -300,13 +301,13 @@ class SchemaConverterTest extends FunSuite with Matchers with BeforeAndAfter {
             }
           }
         """
-      )
+        )
 
-      val expected = StructType(Array(
-        StructField("array", ArrayType(atype, containsNull = true), nullable = false)
-      ))
+        val expected = StructType(Array(
+          StructField("array", ArrayType(atype, containsNull = true), nullable = false)
+        ))
 
-      assert(schema === expected)
+        assert(schema === expected)
     }
   }
 
