@@ -15,22 +15,22 @@ class SchemaConverterTest extends FunSuite with Matchers with BeforeAndAfter {
       StructField("item2", StringType, nullable = false)
     )), nullable = false),
     StructField("array", ArrayType(StructType(Array(
-      StructField("itemProperty1", StringType, nullable = false),
-      StructField("itemProperty2", DoubleType, nullable = false)
+      StructField("itemProperty1", StringType, nullable = true),
+      StructField("itemProperty2", DoubleType, nullable = true)
     )), containsNull = false), nullable = false),
     StructField("structure", StructType(Array(
       StructField("nestedArray", ArrayType(StructType(Array(
-        StructField("key", StringType, nullable = false),
-        StructField("value", LongType, nullable = false)
-      )), containsNull = false), nullable = false)
+        StructField("key", StringType, nullable = true),
+        StructField("value", LongType, nullable = true)
+      )), containsNull = false), nullable = true)
     )), nullable = false),
     StructField("integer", LongType, nullable = false),
     StructField("string", StringType, nullable = false),
     StructField("number", DoubleType, nullable = false),
-    StructField("float", FloatType, nullable = false),
+    StructField("float", FloatType, nullable = true),
     StructField("nullable", DoubleType, nullable = true),
     StructField("boolean", BooleanType, nullable = false),
-    StructField("additionalProperty", StringType, nullable = false)
+    StructField("additionalProperty", StringType, nullable = true)
   ))
 
   before {
@@ -69,7 +69,9 @@ class SchemaConverterTest extends FunSuite with Matchers with BeforeAndAfter {
       StructField("name", StringType, nullable = true)
     )))
     assert(dbNoSchema.select("name").collect()(0)(0) === "aaa")
-    intercept[AnalysisException] { dbNoSchema.select("address") }
+    intercept[AnalysisException] {
+      dbNoSchema.select("address")
+    }
     assert(dbNoSchema.select("foo").collect()(0)(0) === "bar")
 
     // with SchemaConverter
@@ -78,7 +80,9 @@ class SchemaConverterTest extends FunSuite with Matchers with BeforeAndAfter {
     assert(dbWithSchema.select("name").collect()(0)(0) === "aaa")
     assert(Try(dbWithSchema.select("address.zip").collect()(0)(0)).isSuccess)
     assert(Try(dbWithSchema.select("address.foo").collect()(0)(0)).isFailure)
-    intercept[AnalysisException] { dbWithSchema.select("foo") }
+    intercept[AnalysisException] {
+      dbWithSchema.select("foo")
+    }
   }
 
   test("schema should support references") {
@@ -91,7 +95,7 @@ class SchemaConverterTest extends FunSuite with Matchers with BeforeAndAfter {
       )), nullable = false),
       StructField("addressB", StructType(Array(
         StructField("zip", StringType, nullable = true)
-      )), nullable = false)
+      )), nullable = true)
     ))
 
     assert(schema === expected)
@@ -103,6 +107,7 @@ class SchemaConverterTest extends FunSuite with Matchers with BeforeAndAfter {
         {
           "$schema": "smallTestSchema",
           "type": "object",
+          "required": ["address"],
           "properties": {
             "address": {
               "type": "object"
@@ -133,6 +138,7 @@ class SchemaConverterTest extends FunSuite with Matchers with BeforeAndAfter {
           {
             "$$schema": "smallTestSchema",
             "type": "object",
+             "required": ["array"],
             "properties": {
               "array" : {
                 "type" : "array",
@@ -159,6 +165,7 @@ class SchemaConverterTest extends FunSuite with Matchers with BeforeAndAfter {
           {
             "$$schema": "smallTestSchema",
             "type": "object",
+            "required": ["array"],
             "properties": {
               "array" : {
                 "type" : "array",
@@ -187,6 +194,7 @@ class SchemaConverterTest extends FunSuite with Matchers with BeforeAndAfter {
           {
             "$$schema": "smallTestSchema",
             "type": "object",
+            "required": ["array"],
             "properties": {
               "array" : {
                 "type" : "array",
@@ -212,11 +220,13 @@ class SchemaConverterTest extends FunSuite with Matchers with BeforeAndAfter {
           {
             "$$schema": "smallTestSchema",
             "type": "object",
+            "required": ["array"],
             "properties": {
               "array" : {
                 "type" : "array",
                 "items": {
                   "type": "object",
+                  "required": ["name"],
                   "properties": {
                     "name" : {
                       "type" : "string"
@@ -236,21 +246,20 @@ class SchemaConverterTest extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   test("Array of unknown type should fail") {
-
     assertThrows[IllegalArgumentException] {
       val schema = SchemaConverter.convertContent(
         """
-          {
-            "$$schema": "smallTestSchema",
-            "type": "object",
-            "properties": {
-              "array" : {
-                "type" : "array",
-                "items" : {}
+            {
+              "$$schema": "smallTestSchema",
+              "type": "object",
+              "properties": {
+                "array" : {
+                  "type" : "array",
+                  "items" : {}
+                }
               }
             }
-          }
-        """
+          """
       )
     }
   }
@@ -259,19 +268,19 @@ class SchemaConverterTest extends FunSuite with Matchers with BeforeAndAfter {
     assertThrows[IllegalArgumentException] {
       val schema = SchemaConverter.convertContent(
         """
-          {
-            "$$schema": "smallTestSchema",
-            "type": "object",
-            "properties": {
-              "array" : {
-                "type" : "array",
-                "items" : {
-                  "type" : ["string", "integer"]
+            {
+              "$$schema": "smallTestSchema",
+              "type": "object",
+              "properties": {
+                "array" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : ["string", "integer"]
+                  }
                 }
               }
             }
-          }
-        """
+          """
       )
     }
   }
@@ -291,6 +300,7 @@ class SchemaConverterTest extends FunSuite with Matchers with BeforeAndAfter {
           {
             "$$schema": "smallTestSchema",
             "type": "object",
+            "required": ["array"],
             "properties": {
               "array" : {
                 "type" : "array",
@@ -317,6 +327,7 @@ class SchemaConverterTest extends FunSuite with Matchers with BeforeAndAfter {
           {
             "$$schema": "smallTestSchema",
             "type": "object",
+            "required": ["array"],
             "properties": {
               "array" : {
                 "type" : "array",
@@ -342,11 +353,13 @@ class SchemaConverterTest extends FunSuite with Matchers with BeforeAndAfter {
           {
             "$$schema": "smallTestSchema",
             "type": "object",
+            "required": ["array"],
             "properties": {
               "array" : {
                 "type" : "array",
                 "items" : {
                   "type" : ["object", "null"],
+                  "required": ["prop"],
                   "properties" : {
                     "prop" : {
                       "type" : "string"
@@ -397,16 +410,16 @@ class SchemaConverterTest extends FunSuite with Matchers with BeforeAndAfter {
     assertThrows[IllegalArgumentException] {
       val schema = SchemaConverter.convertContent(
         """
-          {
-            "$$schema": "smallTestSchema",
-            "type": "object",
-            "properties": {
-              "prop" : {
-                "type" : ["integer", "float"]
+            {
+              "$$schema": "smallTestSchema",
+              "type": "object",
+              "properties": {
+                "prop" : {
+                  "type" : ["integer", "float"]
+                }
               }
             }
-          }
-        """
+          """
       )
 
     }
@@ -418,6 +431,7 @@ class SchemaConverterTest extends FunSuite with Matchers with BeforeAndAfter {
           {
             "$$schema": "smallTestSchema",
             "type": "object",
+            "required": ["prop"],
             "properties": {
               "prop" : {
                 "type" : ["integer", "float"]
@@ -438,16 +452,16 @@ class SchemaConverterTest extends FunSuite with Matchers with BeforeAndAfter {
     assertThrows[NoSuchElementException] {
       val schema = SchemaConverter.convertContent(
         """
-          {
-            "$$schema": "smallTestSchema",
-            "type": "object",
-            "properties": {
-              "prop" : {
-                "type" : "null"
+            {
+              "$$schema": "smallTestSchema",
+              "type": "object",
+              "properties": {
+                "prop" : {
+                  "type" : "null"
+                }
               }
             }
-          }
-        """
+          """
       )
     }
   }
@@ -456,18 +470,34 @@ class SchemaConverterTest extends FunSuite with Matchers with BeforeAndAfter {
     assertThrows[IllegalArgumentException] {
       val schema = SchemaConverter.convertContent(
         """
-          {
-            "$$schema": "smallTestSchema",
-            "type": "object",
-            "properties": {
-              "prop" : {
-                "type" : ["null"]
+            {
+              "$$schema": "smallTestSchema",
+              "type": "object",
+              "properties": {
+                "prop" : {
+                  "type" : ["null"]
+                }
               }
             }
-          }
-        """
+          """
       )
     }
   }
 
+  test("Non required fields should be null regardless null is included on property type") {
+    val schema = SchemaConverter.enableStrictTyping().convertContent(
+      """
+       {
+         "type": "object",
+         "required": [],
+         "properties": {
+           "size": {
+             "type": "integer"
+           }
+         }
+       }
+    """
+    )
+    assert(schema.fields(0) == StructField("size", LongType, nullable = true))
+  }
 }
