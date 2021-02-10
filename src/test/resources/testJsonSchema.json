@@ -153,6 +153,38 @@
       "description": "to do",
       "name": "boolean"
     },
+    "decimal": {
+      "id": "testSchema/decimal",
+      "type": "decimal",
+      "title": "Test decimal schema.",
+      "description": "to do",
+      "name": "decimal",
+      "precision": 38,
+      "range": 18
+    },
+    "decimal_default": {
+      "id": "testSchema/decimal_default",
+      "type": "decimal",
+      "title": "Test decimal schema.",
+      "description": "to do",
+      "name": "decimal_default"
+    },
+    "decimal_nullable": {
+      "id": "testSchema/decimal_nullable",
+      "type": ["decimal", "null"],
+      "title": "Test decimal schema.",
+      "description": "to do",
+      "name": "decimal_nullable",
+      "precision": 38,
+      "range": 18
+    },
+    "timetamp": {
+      "id": "testSchema/timestamp",
+      "type": "timestamp",
+      "title": "Test timestamp schema.",
+      "description": "to do",
+      "name": "timestamp"
+    },
     "additionalProperty": {
       "id": "testSchema/additionalProperty",
       "type": "string",

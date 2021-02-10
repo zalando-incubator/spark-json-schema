@@ -20,7 +20,7 @@ import scala.io.Source
  * given in the dataset.
  *
  */
-case class SchemaType(typeName: String, nullable: Boolean)
+case class SchemaType(typeName: String, nullable: Boolean, precision: Option[Int] = None, range: Option[Int] = None)
 private case class NullableDataType(dataType: DataType, nullable: Boolean)
 
 object SchemaConverter {
@@ -33,15 +33,25 @@ object SchemaConverter {
   val SchemaRoot = "/"
   val Definitions = "definitions"
   val Reference = "$ref"
+  val Decimal = "decimal"
+  val Precision = "precision"
+  val Range = "range"
   val TypeMap = Map(
     "string" -> StringType,
     "number" -> DoubleType,
     "float" -> FloatType,
     "integer" -> LongType,
     "boolean" -> BooleanType,
+    "decimal" -> DecimalType,
+    "timestamp" -> DataTypes.TimestampType,
     "object" -> StructType,
     "array" -> ArrayType
   )
+  object DecimalNames {
+    val Decimal = "decimal"
+    val Precision = "precision"
+    val Range = "range"
+  }
   var definitions: JsObject = JsObject(Seq.empty)
   private var isStrictTypingEnabled: Boolean = true
 
@@ -85,21 +95,35 @@ object SchemaConverter {
 
   def getJsonId(json: JsValue): Option[String] = (json \ SchemaFieldId).asOpt[String]
 
+  def getDecimal(json: JsValue, nullable: Boolean): SchemaType = {
+    ((json \ DecimalNames.Precision).toOption, (json \ DecimalNames.Range).toOption) match {
+      case (Some(prec), Some(range)) =>
+        SchemaType(DecimalNames.Decimal, nullable, Some(prec.as[Int]), Some(range.as[Int]))
+      case (None, None) => SchemaType(DecimalNames.Decimal, nullable)
+      case _ => throw new IllegalArgumentException("decimal type needs either both precision and range or none of them")
+    }
+  }
+
+  def getSimpleType(json: JsValue, typeName: String, nullable: Boolean): SchemaType = {
+    if (typeName == DecimalNames.Decimal) getDecimal(json, nullable)
+    else SchemaType(typeName, nullable)
+  }
+
   def getJsonType(json: JsObject, name: String): SchemaType = {
     val id = getJsonId(json).getOrElse(name)
 
     (json \ SchemaFieldType).getOrElse(JsNull) match {
-      case JsString(s) => SchemaType(s, nullable = false)
+      case JsString(s) => getSimpleType(json, s, nullable = false)
       case JsArray(array) =>
         val nullable = array.contains(JsString("null"))
         array.size match {
           case 1 if nullable =>
             throw new IllegalArgumentException("Null type only is not supported")
           case 1 =>
-            SchemaType(array.apply(0).as[String], nullable = nullable)
+            getSimpleType(json, array.apply(0).as[String], nullable = nullable)
           case 2 if nullable =>
             array.find(_ != JsString("null"))
-              .map(i => SchemaType(i.as[String], nullable = nullable))
+              .map(i => getSimpleType(json, i.as[String], nullable = nullable))
               .getOrElse {
                 throw new IllegalArgumentException(
                   s"Incorrect definition of a nullable parameter at <$id>"
@@ -178,7 +202,16 @@ object SchemaConverter {
 
   private def getFieldType(json: JsObject, name: String): NullableDataType = {
     val fieldType = getJsonType(json, name)
+    assert(
+      TypeMap.keySet.contains(fieldType.typeName),
+      s"Unknown field type {${fieldType.typeName}}, possible values are: ${TypeMap.keySet}"
+    )
     TypeMap(fieldType.typeName) match {
+
+      case DecimalType => (fieldType.precision, fieldType.range) match {
+        case (Some(prec), Some(range)) => NullableDataType(DataTypes.createDecimalType(prec, range), fieldType.nullable)
+        case _ => NullableDataType(DataTypes.createDecimalType(), fieldType.nullable)
+      }
 
       case dataType: DataType =>
         NullableDataType(dataType, fieldType.nullable)

@@ -30,6 +30,10 @@ class SchemaConverterTest extends FunSuite with Matchers with BeforeAndAfter {
     StructField("float", FloatType, nullable = false),
     StructField("nullable", DoubleType, nullable = true),
     StructField("boolean", BooleanType, nullable = false),
+    StructField("decimal", DecimalType(38, 18), nullable = false),
+    StructField("decimal_default", DecimalType(10, 0), nullable = false),
+    StructField("decimal_nullable", DecimalType(38, 18), nullable = true),
+    StructField("timestamp", DataTypes.TimestampType, nullable = false),
     StructField("additionalProperty", StringType, nullable = false)
   ))
 
@@ -435,7 +439,7 @@ class SchemaConverterTest extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   test("null type only should fail") {
-    assertThrows[NoSuchElementException] {
+    assertThrows[AssertionError] {
       val schema = SchemaConverter.convertContent(
         """
           {
@@ -462,6 +466,39 @@ class SchemaConverterTest extends FunSuite with Matchers with BeforeAndAfter {
             "properties": {
               "prop" : {
                 "type" : ["null"]
+              }
+            }
+          }
+        """
+      )
+    }
+  }
+
+  test("decimal type with only one of precision or range should fail") {
+    assertThrows[IllegalArgumentException] {
+      val schema = SchemaConverter.convertContent(
+        """
+          {
+            "type": "object",
+            "properties": {
+              "decimal": {
+                "type": "decimal",
+                "range": 18
+              }
+            }
+          }
+        """
+      )
+    }
+    assertThrows[IllegalArgumentException] {
+      val schema = SchemaConverter.convertContent(
+        """
+          {
+            "type": "object",
+            "properties": {
+              "decimal": {
+                "type": "decimal",
+                "precision": 38
               }
             }
           }
