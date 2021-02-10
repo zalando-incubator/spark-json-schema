@@ -439,7 +439,7 @@ class SchemaConverterTest extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   test("null type only should fail") {
-    assertThrows[NoSuchElementException] {
+    assertThrows[AssertionError] {
       val schema = SchemaConverter.convertContent(
         """
           {
@@ -466,6 +466,39 @@ class SchemaConverterTest extends FunSuite with Matchers with BeforeAndAfter {
             "properties": {
               "prop" : {
                 "type" : ["null"]
+              }
+            }
+          }
+        """
+      )
+    }
+  }
+
+  test("decimal type with only one of precision or range should fail") {
+    assertThrows[IllegalArgumentException] {
+      val schema = SchemaConverter.convertContent(
+        """
+          {
+            "type": "object",
+            "properties": {
+              "decimal": {
+                "type": "decimal",
+                "range": 18
+              }
+            }
+          }
+        """
+      )
+    }
+    assertThrows[IllegalArgumentException] {
+      val schema = SchemaConverter.convertContent(
+        """
+          {
+            "type": "object",
+            "properties": {
+              "decimal": {
+                "type": "decimal",
+                "precision": 38
               }
             }
           }

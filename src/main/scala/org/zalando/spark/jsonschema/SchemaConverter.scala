@@ -100,7 +100,7 @@ object SchemaConverter {
       case (Some(prec), Some(range)) =>
         SchemaType(DecimalNames.Decimal, nullable, Some(prec.as[Int]), Some(range.as[Int]))
       case (None, None) => SchemaType(DecimalNames.Decimal, nullable)
-      case _ => throw new AssertionError("decimal type needs either both precision and range or none of them")
+      case _ => throw new IllegalArgumentException("decimal type needs either both precision and range or none of them")
     }
   }
 

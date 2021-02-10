@@ -77,6 +77,22 @@
     "boolean": {
       "type": "boolean"
     },
+    "decimal": {
+      "type": "decimal",
+      "precision": 38,
+      "range": 18
+    },
+    "decimal_default": {
+      "type": "decimal"
+    },
+    "decimal_nullable": {
+      "type": ["decimal", "null"],
+      "precision": 38,
+      "range": 18
+    },
+    "timestamp": {
+      "type": "timestamp"
+    },
     "additionalProperty": {
       "type": "string"
     }
