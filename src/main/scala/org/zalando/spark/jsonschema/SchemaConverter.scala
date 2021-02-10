@@ -43,6 +43,7 @@ object SchemaConverter {
     "integer" -> LongType,
     "boolean" -> BooleanType,
     "decimal" -> DecimalType,
+    "timestamp" -> DataTypes.TimestampType,
     "object" -> StructType,
     "array" -> ArrayType
   )

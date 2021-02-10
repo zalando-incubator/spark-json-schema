@@ -33,6 +33,7 @@ class SchemaConverterTest extends FunSuite with Matchers with BeforeAndAfter {
     StructField("decimal", DecimalType(38, 18), nullable = false),
     StructField("decimal_default", DecimalType(10, 0), nullable = false),
     StructField("decimal_nullable", DecimalType(38, 18), nullable = true),
+    StructField("timestamp", DataTypes.TimestampType, nullable = false),
     StructField("additionalProperty", StringType, nullable = false)
   ))
 

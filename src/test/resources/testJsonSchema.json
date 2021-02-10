@@ -178,6 +178,13 @@
       "precision": 38,
       "range": 18
     },
+    "timetamp": {
+      "id": "testSchema/timestamp",
+      "type": "timestamp",
+      "title": "Test timestamp schema.",
+      "description": "to do",
+      "name": "timestamp"
+    },
     "additionalProperty": {
       "id": "testSchema/additionalProperty",
       "type": "string",
