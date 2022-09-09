@@ -1,0 +1,37 @@
+plugins {
+	id 'scala'
+    id 'java-library'
+}
+
+
+def scalaVersion = "2.12"
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+    implementation 'org.scala-lang:scala-library:2.12.10'
+    api group: 'org.apache.spark', name: 'spark-sql_2.12', version: '3.0.1'
+    api group: 'com.typesafe.play', name: 'play-json_2.12', version: '2.9.1'
+    api(group: 'com.fasterxml.jackson.module', name: 'jackson-module-scala_2.12', version: '2.11.2')
+    testImplementation group: 'org.scalatest', name: 'scalatest_2.12', version: '3.0.1'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
+    api(group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.11.2'){
+        version {
+            strictly '2.11.2'
+        }
+    }
+
+}
+
+test {
+    useJUnitPlatform()
+}

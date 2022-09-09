@@ -4,3 +4,6 @@ logs
 **/build/
 **/node_modules/
 **/target/
+.metals
+.vscode
+.gradle
